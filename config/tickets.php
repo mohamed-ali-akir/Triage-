@@ -20,4 +20,16 @@ return [
         'low' => ['take' => 24, 'resolve' => 72],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Retention (GDPR)
+    |--------------------------------------------------------------------------
+    |
+    | Months a closed ticket keeps its content. After that, a scheduled command
+    | erases the texts and keeps only what statistics need (category, priority, dates).
+    |
+    */
+
+    'retention_months' => (int) env('TICKET_RETENTION_MONTHS', 24),
+
 ];

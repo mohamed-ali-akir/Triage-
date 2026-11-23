@@ -45,6 +45,7 @@ class Ticket extends Model
             'taken_at' => 'datetime',
             'resolved_at' => 'datetime',
             'closed_at' => 'datetime',
+            'anonymized_at' => 'datetime',
         ];
     }
 

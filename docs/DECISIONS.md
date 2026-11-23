@@ -293,3 +293,71 @@ Classification, réponse suggérée et détection des doublons sont trois jobs d
 de la réponse ou des doublons ne remet jamais en cause le tri. Chacun écrit sa ligne dans
 `ai_logs` avec son objet (`classification`, `reply`, `duplicates`), ce qui permettra de
 ventiler les coûts dans le tableau de bord.
+
+## Phase 4 — Évaluation et tableau de bord
+
+### D44 — Mesurer l'IA au lieu de la croire
+
+La commande `triage:evaluate` fait classer 60 tickets étiquetés à la main par l'IA et par une
+méthode de référence sans intelligence (des listes de mots-clés). Sans cette comparaison, un
+« 85 % de bonnes réponses » ne veut rien dire : si des `if` font 78 %, l'IA n'apporte que
+7 points. L'évaluation utilise exactement le code de production (masquage, prompt, validation).
+
+### D45 — Afficher la marge d'erreur
+
+Avec 60 tickets et environ 80 % de précision, la marge d'erreur à 95 % est de ± 10 points
+(formule : 1,96 × √(p(1−p)/n)). Le rapport l'affiche à côté de chaque pourcentage et dit si
+l'écart entre l'IA et la référence est significatif. C'est une limite assumée : mieux vaut un
+chiffre honnête avec sa marge qu'un chiffre précis en apparence.
+
+### D46 — Vérifier que le score de confiance sert à quelque chose
+
+Le badge « Confiance faible » n'a de sens que si l'IA se trompe plus souvent quand elle se dit
+peu sûre. Le rapport compare donc la part de réponses justes au-dessus et en dessous du seuil.
+Si les deux parts sont proches, le score ne vaut rien et le seuil doit être revu.
+
+### D47 — Une référence volontairement simple, et ses limites
+
+`KeywordClassifier` est une liste de mots par catégorie et quelques expressions pour la
+priorité. Elle est avantagée : ses mots-clés ont été écrits par la même personne que le jeu de
+test. Elle se laisse aussi tromper par le ton (« URGENT !!! » pour une demande de confort),
+ce qui est précisément la faiblesse qu'on attend de l'IA qu'elle corrige.
+
+### D48 — Les tickets d'évaluation ne sont jamais enregistrés
+
+La commande crée des objets `Ticket` en mémoire, sans les sauvegarder, et journalise ses appels
+sous l'usage `evaluation`. La file des techniciens et les statistiques du tableau de bord ne
+sont donc pas faussées par une évaluation.
+
+### D49 — Ollama derrière la même interface
+
+`OllamaProvider` implémente `AiProvider` comme `AnthropicProvider` : aucun autre fichier ne
+change. Un modèle local ne coûte rien et ne fait sortir aucune donnée, mais il est plus lent
+et souvent moins précis. `triage:evaluate --provider=ollama` donne les chiffres pour décider.
+
+### D50 — Délais cibles en heures calendaires
+
+Chaque priorité a un délai de prise en charge et de résolution (`config/tickets.php`), compté
+depuis la création du ticket. Les nuits et les week-ends ne sont pas exclus : la règle est
+simple à vérifier et à tester. La limite est connue : un ticket créé le vendredi soir est
+« en retard » le lundi matin. Des heures ouvrées seraient une évolution possible.
+
+### D51 — Statistiques calculées en PHP
+
+Les durées moyennes et les retards sont calculés en PHP à partir des dates, et non en SQL : les
+fonctions de date diffèrent entre MySQL et SQLite. Pour quelques milliers de tickets, le coût
+est négligeable et le même code est testé sur les deux bases.
+
+### D52 — Des graphiques sans bibliothèque
+
+Le tableau de bord n'utilise que du HTML et du CSS : barres horizontales d'une seule couleur
+pour comparer des quantités, barre segmentée pour une répartition, tableau pour les chiffres
+exacts. Les couleurs ont été vérifiées pour rester distinguables par les personnes daltoniennes,
+et chaque couleur est doublée d'un libellé et d'un chiffre.
+
+### D53 — Purge RGPD : effacer le contenu, garder les statistiques
+
+Vingt-quatre mois après la clôture, une commande planifiée efface le titre, la description, les
+messages et les brouillons de l'IA. La catégorie, la priorité, les dates et l'historique restent :
+ils alimentent les statistiques et n'identifient plus personne. Le droit à l'effacement suit la
+même logique avec `triage:anonymize-user`, qui transforme le compte en coquille anonyme.
