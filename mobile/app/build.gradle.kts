@@ -15,6 +15,8 @@ android {
         versionCode = 1
         versionName = "1.0"
 
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
         // Address of the REST API, with a trailing slash. Override it without touching the code:
         //   ./gradlew :app:installDebug -Ptriage.apiBaseUrl=http://192.168.1.20:8000/api/v1/
         // The default, 10.0.2.2, is how the Android emulator reaches the computer it runs on.
@@ -64,4 +66,11 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
     debugImplementation(libs.androidx.compose.ui.tooling)
+
+    // Tests that drive the real application on an emulator or a phone.
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    androidTestImplementation(libs.androidx.test.runner)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

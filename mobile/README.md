@@ -76,6 +76,18 @@ php artisan migrate:fresh --seed && php artisan serve
 TRIAGE_API_URL=http://127.0.0.1:8000/api/v1/ ./gradlew :core:test
 ```
 
+### Test sur émulateur
+
+`app/src/androidTest` contient un test qui pilote la vraie application : le technicien se
+connecte, ouvre un ticket et le marque comme résolu, contre un vrai serveur Triage.
+
+```bash
+php artisan migrate:fresh --seed && php artisan serve    # dans un premier terminal
+./gradlew :app:connectedDebugAndroidTest                  # émulateur démarré
+```
+
+La CI exécute ce test à chaque pull request, sur un émulateur Android.
+
 ## Choix techniques
 
 - **Le serveur décide de ce qui est permis.** Le détail d'un ticket contient `allowed_statuses` ;
