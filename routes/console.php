@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\Schedule;
 // No ticket stays "new" for ever if the AI or the queue worker is down.
 Schedule::command('triage:release-stuck')->everyFiveMinutes();
 
+// A resolved ticket nobody reopened is closed after a few days.
+Schedule::command('triage:close-resolved')->dailyAt('02:00');
+
 // Expired tokens of the mobile application are deleted from the database.
 Schedule::command('sanctum:prune-expired --hours=24')->daily();
 

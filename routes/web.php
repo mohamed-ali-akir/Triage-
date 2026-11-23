@@ -12,6 +12,7 @@ use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TicketAssignmentController;
 use App\Http\Controllers\TicketController;
+use App\Http\Controllers\TicketRatingController;
 use App\Http\Controllers\TicketStatusController;
 use App\Http\Controllers\TicketTriageController;
 use Illuminate\Support\Facades\Route;
@@ -28,6 +29,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/tickets/{ticket}/status', [TicketStatusController::class, 'update'])->name('tickets.status.update');
     Route::patch('/tickets/{ticket}/triage', [TicketTriageController::class, 'update'])->name('tickets.triage.update');
     Route::patch('/tickets/{ticket}/assign', [TicketAssignmentController::class, 'update'])->name('tickets.assign.update');
+    Route::post('/tickets/{ticket}/rating', [TicketRatingController::class, 'store'])->name('tickets.rating.store');
     Route::post('/tickets/{ticket}/suggestion/accept', [AiSuggestionController::class, 'accept'])->name('tickets.suggestion.accept');
     Route::post('/tickets/{ticket}/suggestion/reject', [AiSuggestionController::class, 'reject'])->name('tickets.suggestion.reject');
 

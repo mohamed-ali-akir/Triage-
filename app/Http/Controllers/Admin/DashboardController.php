@@ -16,6 +16,7 @@ class DashboardController extends Controller
             'averageMinutesToTake' => $statistics->averageMinutesToTake(),
             'averageMinutesToResolve' => $statistics->averageMinutesToResolve(),
             'sla' => $statistics->sla(),
+            'satisfaction' => $statistics->satisfaction(),
             'suggestions' => $statistics->suggestionsByStatus(),
             'aiUsageByDay' => $statistics->aiUsageByDay(),
             'aiUsageByPurpose' => $statistics->aiUsageByPurpose(),

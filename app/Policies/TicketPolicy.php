@@ -75,6 +75,17 @@ class TicketPolicy
     }
 
     /**
+     * The requester gives their opinion once, when the ticket is resolved or closed.
+     */
+    public function rate(User $user, Ticket $ticket): bool
+    {
+        return $ticket->requester_id === $user->id
+            && in_array($ticket->status, [TicketStatus::Resolved, TicketStatus::Closed], true)
+            && ! $ticket->isRated()
+            && $ticket->anonymized_at === null;
+    }
+
+    /**
      * Who may move the ticket to the given status.
      *
      * This only answers "is this person allowed?". Whether the transition

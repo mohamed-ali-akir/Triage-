@@ -22,6 +22,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Automatic closing
+    |--------------------------------------------------------------------------
+    |
+    | Days a ticket stays "resolved" before it is closed automatically. During
+    | that time the requester can reopen it; once closed, they create a new one.
+    |
+    */
+
+    'auto_close_days' => (int) env('TICKET_AUTO_CLOSE_DAYS', 7),
+
+    /*
+    |--------------------------------------------------------------------------
     | Retention (GDPR)
     |--------------------------------------------------------------------------
     |

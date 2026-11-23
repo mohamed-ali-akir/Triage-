@@ -35,6 +35,8 @@ class TicketAnonymizer
             $ticket->forceFill([
                 'title' => self::ERASED_TITLE,
                 'description' => self::ERASED_DESCRIPTION,
+                // The score stays for the statistics; the comment is free text and goes.
+                'satisfaction_comment' => null,
                 'anonymized_at' => now(),
             ])->save();
         });

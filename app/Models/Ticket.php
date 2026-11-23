@@ -46,7 +46,14 @@ class Ticket extends Model
             'resolved_at' => 'datetime',
             'closed_at' => 'datetime',
             'anonymized_at' => 'datetime',
+            'satisfaction_score' => 'integer',
+            'rated_at' => 'datetime',
         ];
+    }
+
+    public function isRated(): bool
+    {
+        return $this->rated_at !== null;
     }
 
     /**
