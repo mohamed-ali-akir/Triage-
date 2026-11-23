@@ -25,10 +25,14 @@ class PromptRepository
 
         $prompt = (string) file_get_contents($path);
 
+        $placeholders = [];
+
         foreach ($variables as $key => $value) {
-            $prompt = str_replace('{{ '.$key.' }}', $value, $prompt);
+            $placeholders['{{ '.$key.' }}'] = $value;
         }
 
-        return trim($prompt);
+        // One single pass: a placeholder written inside a value (a ticket containing
+        // "{{ articles }}") is left as plain text, never replaced in its turn.
+        return trim(strtr($prompt, $placeholders));
     }
 }

@@ -2,7 +2,7 @@
     <x-form.input name="title" :value="$article->title" required minlength="5" maxlength="150" />
 </x-form.field>
 
-<x-form.field name="content" label="Contenu" hint="Format Markdown : # titre, - liste, 1. étapes, **gras**. Le HTML est retiré à l'affichage.">
+<x-form.field name="content" label="Contenu" hint="Format Markdown : # titre, - liste, 1. étapes, **gras**. Le HTML est retiré à l'affichage. N'écrivez aucun mot de passe ni secret : l'article est transmis à l'IA et peut être repris dans une réponse.">
     <x-form.textarea name="content" :value="$article->content" rows="14" required class="font-mono" />
 </x-form.field>
 
