@@ -8,6 +8,8 @@
             <x-card title="Description">
                 <p class="whitespace-pre-line text-sm leading-relaxed text-slate-700">{{ $ticket->description }}</p>
             </x-card>
+
+            <livewire:ticket-thread :ticket="$ticket" />
         </div>
 
         <aside class="space-y-6">

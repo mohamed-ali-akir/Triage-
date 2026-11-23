@@ -65,6 +65,16 @@ class Ticket extends Model
     }
 
     /**
+     * The discussion thread, oldest message first.
+     *
+     * @return HasMany<TicketMessage, $this>
+     */
+    public function messages(): HasMany
+    {
+        return $this->hasMany(TicketMessage::class)->oldest('created_at')->oldest('id');
+    }
+
+    /**
      * The history of the ticket, oldest change first.
      *
      * @return HasMany<TicketEvent, $this>

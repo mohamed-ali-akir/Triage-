@@ -30,6 +30,26 @@ class TicketPolicy
     }
 
     /**
+     * The requester and the technicians can write in the thread of an open ticket.
+     */
+    public function reply(User $user, Ticket $ticket): bool
+    {
+        if (! $ticket->status->isOpen()) {
+            return false;
+        }
+
+        return $user->isTechnician() || $ticket->requester_id === $user->id;
+    }
+
+    /**
+     * Internal notes are written by technicians and never shown to the requester.
+     */
+    public function writeInternalNote(User $user, Ticket $ticket): bool
+    {
+        return $ticket->status->isOpen() && $user->isTechnician();
+    }
+
+    /**
      * Who may move the ticket to the given status.
      *
      * This only answers "is this person allowed?". Whether the transition
