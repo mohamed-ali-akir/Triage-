@@ -29,9 +29,11 @@ class TicketClassifier
     ) {}
 
     /**
+     * @param  string  $purpose  written to the AI log: "classification" for real tickets, "evaluation" for the test set
+     *
      * @throws ClassificationFailed
      */
-    public function classify(Ticket $ticket): Classification
+    public function classify(Ticket $ticket, string $purpose = 'classification'): Classification
     {
         $categories = Category::query()->active()->orderBy('slug')->get();
 
@@ -41,7 +43,7 @@ class TicketClassifier
 
         for ($attempt = 1; $attempt <= self::MAX_ATTEMPTS; $attempt++) {
             try {
-                $answer = $this->ai->ask('classification', $ticket, $systemPrompt, $userPrompt, $schema);
+                $answer = $this->ai->ask($purpose, $ticket, $systemPrompt, $userPrompt, $schema);
             } catch (AiProviderException $exception) {
                 // Timeout, quota, outage: trying again right away would not help.
                 throw ClassificationFailed::providerError($exception->errorCode);
