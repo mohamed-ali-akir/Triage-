@@ -1,5 +1,6 @@
 <?php
 
+use App\Exceptions\InvalidTicketTransition;
 use App\Http\Middleware\EnsureUserIsActive;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -21,4 +22,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
+
+        // A forbidden transition is a normal business error, not a crash:
+        // explain it to the user instead of showing an error 500.
+        $exceptions->render(function (InvalidTicketTransition $exception, Request $request) {
+            if ($request->expectsJson()) {
+                return response()->json(['message' => $exception->getMessage()], 422);
+            }
+
+            return back()->with('error', $exception->getMessage());
+        });
     })->create();

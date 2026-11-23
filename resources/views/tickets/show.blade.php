@@ -11,6 +11,8 @@
         </div>
 
         <aside class="space-y-6">
+            @include('tickets._actions')
+
             <x-card title="Détails">
                 <dl class="space-y-3 text-sm">
                     <div class="flex items-center justify-between gap-4">
@@ -54,6 +56,8 @@
                     @endif
                 </dl>
             </x-card>
+
+            @include('tickets._history')
         </aside>
     </div>
 </x-layouts.app>

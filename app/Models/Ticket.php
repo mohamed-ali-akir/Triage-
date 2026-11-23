@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 // Status, priority, category and assignee are not mass assignable on purpose:
 // they only change through App\Services\Tickets\TicketWorkflow, which records the history.
@@ -61,6 +62,16 @@ class Ticket extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    /**
+     * The history of the ticket, oldest change first.
+     *
+     * @return HasMany<TicketEvent, $this>
+     */
+    public function events(): HasMany
+    {
+        return $this->hasMany(TicketEvent::class)->oldest('created_at')->oldest('id');
     }
 
     /**
