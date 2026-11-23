@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Category;
 use App\Models\Department;
 use Illuminate\Database\Seeder;
 
@@ -16,6 +17,19 @@ class ReferenceDataSeeder extends Seeder
 
         foreach ($departments as $name) {
             Department::firstOrCreate(['name' => $name]);
+        }
+
+        $categories = [
+            'materiel' => 'Matériel',
+            'reseau' => 'Réseau',
+            'acces-comptes' => 'Accès et comptes',
+            'logiciel' => 'Logiciel',
+            'messagerie' => 'Messagerie',
+            'autre' => 'Autre',
+        ];
+
+        foreach ($categories as $slug => $name) {
+            Category::firstOrCreate(['slug' => $slug], ['name' => $name]);
         }
     }
 }

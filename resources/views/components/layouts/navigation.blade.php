@@ -7,6 +7,7 @@
         <nav class="flex flex-1 flex-wrap items-center gap-x-1 gap-y-1 text-sm" aria-label="Navigation principale">
             @can('access-admin')
                 <x-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')">Comptes</x-nav-link>
+                <x-nav-link :href="route('admin.categories.index')" :active="request()->routeIs('admin.categories.*')">Catégories</x-nav-link>
             @endcan
         </nav>
 

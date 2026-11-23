@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProfileController;
@@ -14,5 +15,6 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('admin')->name('admin.')->middleware('can:access-admin')->group(function () {
         Route::resource('users', UserController::class)->except(['show', 'destroy']);
+        Route::resource('categories', CategoryController::class)->except(['show']);
     });
 });
