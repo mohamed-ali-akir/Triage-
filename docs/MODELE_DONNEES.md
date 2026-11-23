@@ -222,11 +222,30 @@ sequenceDiagram
     Note over App: Le ticket n'est modifié qu'ici, par le technicien
 ```
 
-## 7. Tables prévues pour les phases suivantes
+## 7. Tables de la phase 3 (base de connaissances)
 
-| Table | Phase | Rôle |
-|---|---|---|
-| `kb_articles` | 3 | Articles de la base de connaissances |
-| `ai_suggestion_kb_article` | 3 | Articles cités par une suggestion (table de liaison) |
+```mermaid
+erDiagram
+    CATEGORY |o--o{ KB_ARTICLE : "classe"
+    AI_SUGGESTION }o--o{ KB_ARTICLE : "cite"
+    TICKET }o--o{ TICKET : "semble en double de"
 
-Leur MCD sera ajouté ici au début de chaque phase.
+    KB_ARTICLE {
+        int id PK
+        string title
+        text content
+        boolean is_published
+    }
+```
+
+- **kb_articles** (id PK, title, content, #category_id, is_published, created_at, updated_at),
+  avec un index `FULLTEXT (title, content)` sur MySQL et MariaDB.
+- **ai_suggestion_kb_article** (#ai_suggestion_id, #kb_article_id) : les articles cités par une
+  réponse suggérée. Clé primaire composée des deux colonnes.
+- **ticket_duplicates** (id PK, #ticket_id, #duplicate_of_id, detected_by, created_at), avec une
+  contrainte d'unicité sur le couple. `detected_by` vaut `ai` ou `keywords`.
+- **ai_suggestions** reçoit les colonnes `reply` (brouillon de réponse) et `reply_status`
+  (`proposed`, `no_article` ou `failed`).
+
+Les deux relations plusieurs-à-plusieurs (suggestion / article, ticket / ticket) deviennent
+chacune une table de liaison dans le MLD.

@@ -41,7 +41,7 @@ return [
 
     'duplicates' => [
         'window_days' => (int) env('AI_DUPLICATES_WINDOW_DAYS', 14),
-        'min_shared_keywords' => (int) env('AI_DUPLICATES_MIN_SHARED_KEYWORDS', 2),
+        'min_shared_keywords' => (int) env('AI_DUPLICATES_MIN_SHARED_KEYWORDS', 3),
         'max_candidates' => 5,
     ],
 

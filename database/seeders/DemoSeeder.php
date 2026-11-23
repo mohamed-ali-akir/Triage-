@@ -4,12 +4,14 @@ namespace Database\Seeders;
 
 use App\Actions\Tickets\CreateTicket;
 use App\Actions\Tickets\PostTicketMessage;
+use App\Enums\ReplyStatus;
 use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
 use App\Enums\TriageMode;
 use App\Enums\UserRole;
 use App\Models\Category;
 use App\Models\Department;
+use App\Models\KbArticle;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Services\Ai\SuggestionReviewer;
@@ -48,6 +50,7 @@ class DemoSeeder extends Seeder
         $this->startedAt = Carbon::now();
 
         $users = $this->createUsers();
+        $this->createKnowledgeBase();
 
         foreach ($this->scenarios() as $scenario) {
             $this->play($scenario, $users);
@@ -92,7 +95,7 @@ class DemoSeeder extends Seeder
     /**
      * Play one scenario: create the ticket, then move it step by step up to its target status.
      *
-     * @param  array{title: string, description: string, requester: string, days_ago: int, status: TicketStatus, category?: string, priority?: TicketPriority, technician?: string, messages?: list<array{0: string, 1: string, 2?: bool}>, reopened?: bool, ai?: array{0: string, 1: TicketPriority, 2: float}, ai_rejected?: bool}  $scenario
+     * @param  array{title: string, description: string, requester: string, days_ago: int, status: TicketStatus, category?: string, priority?: TicketPriority, technician?: string, messages?: list<array{0: string, 1: string, 2?: bool}>, reopened?: bool, ai?: array{0: string, 1: TicketPriority, 2: float}, ai_rejected?: bool, ai_reply?: array{0: string, 1: string}, ai_no_article?: bool}  $scenario
      * @param  array<string, User>  $users
      */
     private function play(array $scenario, array $users): void
@@ -116,7 +119,7 @@ class DemoSeeder extends Seeder
         $reviewer = $technician ?? $users['tech1'];
 
         if (isset($scenario['ai'])) {
-            $this->storeSuggestion($ticket, $scenario['ai']);
+            $this->storeSuggestion($ticket, $scenario['ai'], $scenario['ai_reply'] ?? null, $scenario['ai_no_article'] ?? false);
         }
 
         if ($scenario['ai_rejected'] ?? false) {
@@ -141,22 +144,164 @@ class DemoSeeder extends Seeder
     }
 
     /**
-     * Store what the classification job would have stored if the AI had been called.
+     * Store what the AI jobs would have stored if the AI had been called.
      *
      * @param  array{0: string, 1: TicketPriority, 2: float}  $suggestion  category slug, priority, confidence
+     * @param  array{0: string, 1: string}|null  $reply  draft reply and title of the article it cites
      */
-    private function storeSuggestion(Ticket $ticket, array $suggestion): void
+    private function storeSuggestion(Ticket $ticket, array $suggestion, ?array $reply, bool $noArticle): void
     {
         [$slug, $priority, $confidence] = $suggestion;
 
         $ticket->triage_mode = TriageMode::Ai;
         $ticket->save();
 
-        $ticket->suggestions()->create([
+        $stored = $ticket->suggestions()->create([
             'category_id' => Category::query()->where('slug', $slug)->value('id'),
             'priority' => $priority,
             'confidence' => $confidence,
+            'reply' => $reply[0] ?? null,
+            'reply_status' => match (true) {
+                $reply !== null => ReplyStatus::Proposed,
+                $noArticle => ReplyStatus::NoArticle,
+                default => null,
+            },
         ]);
+
+        if ($reply !== null) {
+            $stored->articles()->attach(KbArticle::query()->where('title', $reply[1])->value('id'));
+        }
+    }
+
+    /**
+     * A small knowledge base: the procedures the support team already knows.
+     */
+    private function createKnowledgeBase(): void
+    {
+        $articles = [
+            ['materiel', true, 'Bourrage papier sur une imprimante multifonction', <<<'MD'
+                # Symptôme
+
+                L'imprimante affiche « Bourrage papier » et refuse d'imprimer.
+
+                # Solution
+
+                1. Éteindre l'imprimante.
+                2. Ouvrir le capot arrière et retirer doucement les feuilles coincées.
+                3. Ouvrir le bac papier et vérifier qu'aucune feuille n'est pliée.
+                4. Rallumer l'imprimante : le message doit disparaître.
+
+                Si le message revient sans feuille visible, un morceau de papier est resté sur les rouleaux : prévoir un passage du support.
+                MD],
+            ['acces-comptes', true, 'Réinitialiser un mot de passe Windows et déverrouiller un compte', <<<'MD'
+                # Quand l'utiliser
+
+                Un salarié a oublié son mot de passe de session, ou son compte est verrouillé après plusieurs essais.
+
+                # Procédure
+
+                1. Vérifier l'identité du demandeur (rappel sur son poste interne).
+                2. Dans la console Active Directory, déverrouiller le compte.
+                3. Définir un mot de passe provisoire et cocher « L'utilisateur doit changer le mot de passe ».
+                4. Communiquer le mot de passe provisoire **par téléphone**, jamais dans le ticket ni par e-mail.
+                MD],
+            ['reseau', true, 'Renouveler un certificat VPN expiré', <<<'MD'
+                # Symptôme
+
+                En télétravail, le client VPN affiche « Échec de l'authentification » alors que le mot de passe est correct.
+
+                # Cause
+
+                Le certificat VPN du poste est valable un an. Passé ce délai, la connexion est refusée.
+
+                # Solution
+
+                1. Générer un nouveau certificat dans la console VPN.
+                2. L'envoyer au salarié sur sa messagerie professionnelle.
+                3. Le salarié double-clique sur le fichier puis relance le client VPN.
+                MD],
+            ['messagerie', true, 'Outlook affiche « Déconnecté »', <<<'MD'
+                # Vérifications
+
+                1. Redémarrer complètement le poste (et non une simple mise en veille).
+                2. Vérifier que le mode « Travailler hors connexion » n'est pas activé dans l'onglet Envoi/Réception.
+                3. Tester le webmail : s'il fonctionne, le problème vient du profil Outlook.
+
+                # Si le problème persiste
+
+                Recréer le profil Outlook depuis le Panneau de configuration > Courrier.
+                MD],
+            ['messagerie', true, 'Reconnaître et signaler un e-mail d\'hameçonnage', <<<'MD'
+                # Les signes
+
+                - Un expéditeur inconnu ou une adresse qui imite celle d'un collègue.
+                - Une demande urgente de confirmer des identifiants ou de payer une facture.
+                - Un lien dont l'adresse ne correspond pas au texte affiché.
+
+                # Que faire
+
+                1. Ne cliquer sur aucun lien, n'ouvrir aucune pièce jointe.
+                2. Signaler le message au support, qui bloque l'expéditeur.
+                3. Supprimer le message.
+
+                Si un lien a été ouvert ou un mot de passe saisi, le signaler immédiatement : le mot de passe doit être changé.
+                MD],
+            ['reseau', true, 'Wifi lent ou instable dans une salle de réunion', <<<'MD'
+                # Vérifications
+
+                1. Vérifier que le poste est connecté au réseau « Entreprise » et non au réseau « Invités », qui est bridé.
+                2. Se rapprocher de la borne : les cloisons vitrées affaiblissent le signal.
+                3. Pour une visioconférence, préférer le câble réseau disponible sur la table de réunion.
+
+                # Si plusieurs personnes sont touchées
+
+                Relever l'heure et la salle, puis prévoir un contrôle de la borne par le support.
+                MD],
+            ['logiciel', true, 'Demander l\'installation d\'un logiciel', <<<'MD'
+                # Logiciels du catalogue
+
+                LibreOffice, 7-Zip, VLC, Firefox et le lecteur PDF sont installés à distance par le support, sans validation.
+
+                # Autres logiciels
+
+                Une validation du responsable de service est nécessaire. Le support vérifie ensuite la licence et la sécurité du logiciel avant l'installation.
+                MD],
+            ['autre', true, 'Où enregistrer ses documents pour qu\'ils soient sauvegardés', <<<'MD'
+                # Ce qui est sauvegardé
+
+                Seul le lecteur réseau **P:** est sauvegardé, chaque nuit.
+
+                # Ce qui ne l'est pas
+
+                Le Bureau, le dossier Documents du poste et les clés USB ne sont pas sauvegardés. En cas de panne du poste, leur contenu est perdu.
+
+                # Restaurer un fichier
+
+                Clic droit sur le dossier dans P: > « Restaurer les versions précédentes ».
+                MD],
+            ['acces-comptes', true, 'Arrivée d\'un nouveau salarié : comptes et accès', <<<'MD'
+                # À préparer avant l'arrivée
+
+                1. Compte Windows et boîte mail, au format prenom.nom.
+                2. Ajout aux groupes de son service pour l'accès aux dossiers partagés.
+                3. Accès aux logiciels métier, sur demande écrite du responsable.
+
+                # Le jour de l'arrivée
+
+                Remettre le mot de passe provisoire en main propre et faire signer la charte informatique.
+                MD],
+            ['reseau', false, 'Migration vers le nouveau client VPN (brouillon)', <<<'MD'
+                Procédure en cours de rédaction. Ne pas appliquer avant validation.
+                MD],
+        ];
+
+        foreach ($articles as [$slug, $published, $title, $content]) {
+            KbArticle::updateOrCreate(['title' => $title], [
+                'content' => $content,
+                'category_id' => Category::query()->where('slug', $slug)->value('id'),
+                'is_published' => $published,
+            ]);
+        }
     }
 
     /**
@@ -208,7 +353,7 @@ class DemoSeeder extends Seeder
     }
 
     /**
-     * @return list<array{title: string, description: string, requester: string, days_ago: int, status: TicketStatus, category?: string, priority?: TicketPriority, technician?: string, messages?: list<array{0: string, 1: string, 2?: bool}>, reopened?: bool, ai?: array{0: string, 1: TicketPriority, 2: float}, ai_rejected?: bool}>
+     * @return list<array{title: string, description: string, requester: string, days_ago: int, status: TicketStatus, category?: string, priority?: TicketPriority, technician?: string, messages?: list<array{0: string, 1: string, 2?: bool}>, reopened?: bool, ai?: array{0: string, 1: TicketPriority, 2: float}, ai_rejected?: bool, ai_reply?: array{0: string, 1: string}, ai_no_article?: bool}>
      */
     private function scenarios(): array
     {
@@ -333,12 +478,18 @@ class DemoSeeder extends Seeder
                 'description' => "L'imprimante du 2e étage affiche « Bourrage papier » même après avoir retiré toutes les feuilles.",
                 'requester' => 'user3', 'days_ago' => 0, 'status' => TicketStatus::PendingValidation,
                 'ai' => ['materiel', TicketPriority::Normal, 0.93],
+                'ai_reply' => [
+                    "Bonjour,\n\nCe message apparaît quand une feuille est restée coincée à l'intérieur. Pouvez-vous essayer ceci :\n\n1. Éteindre l'imprimante.\n2. Ouvrir le capot arrière et retirer doucement les feuilles coincées.\n3. Vérifier qu'aucune feuille n'est pliée dans le bac papier.\n4. Rallumer l'imprimante.\n\nSi le message revient, dites-le-nous : un technicien passera contrôler les rouleaux.",
+                    'Bourrage papier sur une imprimante multifonction',
+                ],
             ],
             [
                 'title' => 'L\'imprimante du 2e étage ne répond plus',
                 'description' => "Impossible d'imprimer sur l'imprimante du deuxième étage : les documents restent bloqués dans la file d'attente.",
                 'requester' => 'user5', 'days_ago' => 0, 'status' => TicketStatus::PendingValidation,
                 'ai' => ['materiel', TicketPriority::Normal, 0.88],
+                // The only printer article is about paper jams: the AI says that nothing fits.
+                'ai_no_article' => true,
             ],
             [
                 'title' => 'Wifi très lent dans la salle de réunion',
@@ -346,6 +497,10 @@ class DemoSeeder extends Seeder
                 'requester' => 'user4', 'days_ago' => 0, 'status' => TicketStatus::PendingValidation,
                 // Low confidence: network or hardware? The technician is warned.
                 'ai' => ['reseau', TicketPriority::Normal, 0.58],
+                'ai_reply' => [
+                    "Bonjour,\n\nPour vos visioconférences en salle de réunion, deux vérifications :\n\n1. Votre poste doit être connecté au réseau « Entreprise » et non au réseau « Invités », qui est bridé.\n2. Le câble réseau disponible sur la table de réunion donne une connexion bien plus stable que le wifi.\n\nSi le problème continue, indiquez-nous l'heure et la salle : nous contrôlerons la borne.",
+                    'Wifi lent ou instable dans une salle de réunion',
+                ],
             ],
         ];
     }

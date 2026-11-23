@@ -232,3 +232,61 @@ explique à l'IA son rôle, le sens de chaque priorité et pourquoi le ticket es
 `RateLimited('ai-calls')` plafonne le nombre d'appels à l'IA par minute pour toute
 l'application. Un Job en trop n'échoue pas : il est remis dans la file et réessayé plus tard,
 dans la limite de `AI_STUCK_AFTER_MINUTES`. Cela protège le budget et le quota de l'API.
+
+## Phase 3 — Base de connaissances et réponses suggérées
+
+### D36 — La recherche derrière une interface, deux implémentations
+
+`FULLTEXT` existe sur MySQL et MariaDB, pas sur SQLite (utilisé par les tests). L'interface
+`KbSearch` a donc deux implémentations : `FullTextKbSearch` (index plein texte, classement par
+la base) et `KeywordKbSearch` (comptage de mots-clés en PHP). Le conteneur choisit selon le
+pilote de base de données. Le plein texte est testé par des tests d'intégration qui ne tournent
+que sur MySQL, dans la CI.
+
+### D37 — Tests d'intégration sans transaction
+
+Un index plein texte MySQL ne voit pas les lignes d'une transaction non validée. Or
+`RefreshDatabase` enveloppe chaque test dans une transaction. Les tests du dossier
+`tests/Integration` utilisent donc `DatabaseMigrations` : la base est recréée et les données
+réellement écrites. C'est plus lent, donc réservé à ces quelques tests.
+
+### D38 — RAG simple : chercher, puis générer
+
+La réponse suggérée suit trois étapes : chercher les 3 articles publiés les plus proches du
+ticket, les donner à l'IA avec le ticket masqué, enregistrer le brouillon avec les articles
+cités. Pas d'embeddings : pour quelques dizaines d'articles, le plein texte suffit, il est
+gratuit et je peux expliquer pourquoi un article a été retenu.
+
+### D39 — Pas d'article, pas de réponse
+
+Trois verrous empêchent une réponse inventée. Si la recherche ne trouve rien, l'IA n'est même
+pas appelée. Si les articles ne répondent pas au ticket, le prompt demande `has_answer: false`.
+Si le brouillon ne cite aucune source, ou cite un article qui n'a pas été fourni, Laravel le
+refuse. Le technicien voit alors « aucun article ne répond à ce ticket ».
+
+### D40 — Le brouillon n'est jamais envoyé seul
+
+« Utiliser cette réponse » ne fait que remplir la zone de message. Le technicien relit,
+corrige, puis clique lui-même sur « Envoyer » : le message part sous son nom. Le demandeur ne
+voit jamais le brouillon. C'est la même règle que pour le tri : l'IA propose, l'humain décide.
+
+### D41 — Markdown rendu sans HTML
+
+Les articles sont écrits en Markdown et convertis en HTML à l'affichage, avec les options
+`html_input: strip` et `allow_unsafe_links: false`. Un article ne peut donc pas injecter de
+script (faille XSS), même s'il est rédigé par un administrateur. Un test le vérifie.
+
+### D42 — Doublons : mots-clés d'abord, IA ensuite
+
+Comparer chaque ticket à tous les autres avec l'IA coûterait cher. La détection se fait en deux
+temps : les tickets ouverts récents qui partagent au moins 3 mots-clés sont candidats (calcul
+local, gratuit), puis l'IA confirme les vrais doublons parmi 5 candidats au plus. Si l'IA est
+désactivée ou en panne, les candidats sont gardés avec la mention « mots communs » : le
+technicien sait ce que vaut l'indication.
+
+### D43 — Trois jobs indépendants
+
+Classification, réponse suggérée et détection des doublons sont trois jobs distincts. Un échec
+de la réponse ou des doublons ne remet jamais en cause le tri. Chacun écrit sa ligne dans
+`ai_logs` avec son objet (`classification`, `reply`, `duplicates`), ce qui permettra de
+ventiler les coûts dans le tableau de bord.

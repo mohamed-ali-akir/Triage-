@@ -33,11 +33,25 @@ class Keywords
         $normalised = Str::lower(Str::ascii($text));
         $words = preg_split('/[^a-z0-9]+/', $normalised, flags: PREG_SPLIT_NO_EMPTY) ?: [];
 
-        $keywords = array_filter(
-            $words,
-            fn (string $word): bool => strlen($word) >= self::MIN_LENGTH && ! in_array($word, self::STOPWORDS, true),
-        );
+        $keywords = array_filter($words, fn (string $word): bool => $this->isMeaningful($word));
 
         return array_values(array_unique($keywords));
+    }
+
+    /**
+     * Short words are dropped, except those with a digit: "2e" (étage) or "w11"
+     * often identify the very equipment a ticket is about.
+     */
+    private function isMeaningful(string $word): bool
+    {
+        if (in_array($word, self::STOPWORDS, true)) {
+            return false;
+        }
+
+        if (strlen($word) >= self::MIN_LENGTH) {
+            return true;
+        }
+
+        return strlen($word) === 2 && preg_match('/\d/', $word) === 1;
     }
 }

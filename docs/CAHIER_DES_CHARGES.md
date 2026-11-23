@@ -261,9 +261,9 @@ vers `main`, et un résumé de ce qui est fait et de ce qui reste.
 | # | Étape | Critère d'acceptation |
 |---|---|---|
 | 3.1 | CRUD des articles | Réservé à l'admin ; seuls les articles publiés sont utilisés |
-| 3.2 | Recherche derrière une interface | Plein texte sur MySQL, repli `LIKE` sur SQLite |
+| 3.2 | Recherche derrière une interface | Plein texte sur MySQL, repli par mots-clés sur SQLite |
 | 3.3 | Réponse suggérée avec sources | Les articles cités sont enregistrés ; pas d'article, pas d'invention |
-| 3.4 | Détection des doublons | Les tickets ouverts similaires sont signalés au technicien |
+| 3.4 | Détection des doublons | Candidats par mots-clés, confirmation par l'IA, signalement au technicien |
 
 ### Phase 4 — Évaluation et tableau de bord
 
