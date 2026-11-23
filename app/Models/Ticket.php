@@ -46,7 +46,14 @@ class Ticket extends Model
             'resolved_at' => 'datetime',
             'closed_at' => 'datetime',
             'anonymized_at' => 'datetime',
+            'satisfaction_score' => 'integer',
+            'rated_at' => 'datetime',
         ];
+    }
+
+    public function isRated(): bool
+    {
+        return $this->rated_at !== null;
     }
 
     /**
@@ -71,6 +78,14 @@ class Ticket extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    /**
+     * @return HasMany<TicketAttachment, $this>
+     */
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(TicketAttachment::class)->oldest('id');
     }
 
     /**

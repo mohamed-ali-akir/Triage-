@@ -19,9 +19,12 @@
 
     // "Take this ticket" is offered to a technician when the ticket can change hands.
     $canAssign = $ticket->status->acceptsAssignment() && auth()->user()->can('assign', $ticket);
+
+    // "Give this ticket to a colleague" is offered to the support staff once the ticket is triaged.
+    $canAssignTo = $ticket->status->acceptsAssignment() && $ticket->isTriaged() && $technicians->isNotEmpty();
 @endphp
 
-@if ($transitions->isNotEmpty() || $canAssign)
+@if ($transitions->isNotEmpty() || $canAssign || $canAssignTo)
     <x-card title="Actions">
         <div class="space-y-2">
             @if ($canAssign)
@@ -37,6 +40,24 @@
                 @unless ($ticket->isTriaged())
                     <p class="text-xs text-slate-500">Triez d'abord le ticket : catégorie et priorité.</p>
                 @endunless
+            @endif
+
+            @if ($canAssignTo)
+                <form method="POST" action="{{ route('tickets.assign.update', $ticket) }}" class="flex gap-2">
+                    @csrf
+                    @method('PATCH')
+
+                    <label for="assignee_id" class="sr-only">Assigner à un technicien</label>
+                    <select id="assignee_id" name="assignee_id" required
+                            class="block w-full min-w-0 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+                        <option value="">Assigner à…</option>
+                        @foreach ($technicians as $technician)
+                            <option value="{{ $technician->id }}">{{ $technician->name }}</option>
+                        @endforeach
+                    </select>
+
+                    <x-button variant="secondary">Assigner</x-button>
+                </form>
             @endif
 
             @foreach ($transitions as $target)

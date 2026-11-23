@@ -26,4 +26,12 @@ class KbArticleFactory extends Factory
     {
         return $this->state(['is_published' => false]);
     }
+
+    /**
+     * An article opened to every employee in the help center.
+     */
+    public function public(): static
+    {
+        return $this->state(['is_public' => true]);
+    }
 }

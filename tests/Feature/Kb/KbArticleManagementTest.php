@@ -15,6 +15,7 @@ function articlePayload(array $overrides = []): array
         'content' => "1. Ouvrir la console Active Directory.\n2. Chercher le compte.\n3. Choisir « Réinitialiser le mot de passe ».",
         'category_id' => '',
         'is_published' => '1',
+        'is_public' => '0',
     ], $overrides);
 }
 
@@ -55,7 +56,19 @@ test('an administrator creates an article', function () {
 
     expect($article->title)->toBe('Réinitialiser un mot de passe Windows')
         ->and($article->category_id)->toBe($category->id)
-        ->and($article->is_published)->toBeTrue();
+        ->and($article->is_published)->toBeTrue()
+        // Internal unless the administrator decides otherwise.
+        ->and($article->is_public)->toBeFalse();
+});
+
+test('an administrator opens an article to the help center', function () {
+    $article = KbArticle::factory()->create();
+
+    $this->actingAs($this->admin)
+        ->put("/admin/kb-articles/{$article->id}", articlePayload(['is_public' => '1']))
+        ->assertRedirect('/admin/kb-articles');
+
+    expect($article->refresh()->is_public)->toBeTrue();
 });
 
 test('an article is validated', function (array $overrides, string $field) {

@@ -175,12 +175,16 @@ jobs:
           script: ./gradlew :app:connectedDebugAndroidTest --no-daemon
 
       # The test saves one screenshot per step: download them from the page of the run.
-      - name: Captures d'écran de l'application
+      # Published after a failure too, with the test report: the last screenshot shows where it stopped.
+      - name: Captures d'écran et rapport du test
+        if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: captures-application-mobile
-          path: mobile/app/build/outputs/connected_android_test_additional_output/
-          if-no-files-found: error
+          path: |
+            mobile/app/build/outputs/connected_android_test_additional_output/
+            mobile/app/build/reports/androidTests/
+          if-no-files-found: warn
 
       - name: Journal du serveur en cas d'échec
         if: failure()

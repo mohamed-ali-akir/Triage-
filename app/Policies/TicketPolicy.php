@@ -51,6 +51,14 @@ class TicketPolicy
     }
 
     /**
+     * The requester and the technicians join files to an open ticket.
+     */
+    public function attach(User $user, Ticket $ticket): bool
+    {
+        return $this->reply($user, $ticket);
+    }
+
+    /**
      * Internal notes are written by technicians and never shown to the requester.
      */
     public function writeInternalNote(User $user, Ticket $ticket): bool
@@ -72,6 +80,25 @@ class TicketPolicy
     public function assign(User $user, Ticket $ticket): bool
     {
         return $user->isTechnician() && $ticket->assignee_id !== $user->id;
+    }
+
+    /**
+     * The support staff (technicians and administrators) gives a ticket to a chosen technician.
+     */
+    public function assignTo(User $user, Ticket $ticket): bool
+    {
+        return $user->isStaff();
+    }
+
+    /**
+     * The requester gives their opinion once, when the ticket is resolved or closed.
+     */
+    public function rate(User $user, Ticket $ticket): bool
+    {
+        return $ticket->requester_id === $user->id
+            && in_array($ticket->status, [TicketStatus::Resolved, TicketStatus::Closed], true)
+            && ! $ticket->isRated()
+            && $ticket->anonymized_at === null;
     }
 
     /**

@@ -19,9 +19,11 @@
 @endphp
 
 <x-layouts.app title="Tableau de bord">
-    <x-page-header title="Tableau de bord" subtitle="L'activité du support et l'usage de l'IA." />
+    <x-page-header title="Tableau de bord" subtitle="L'activité du support et l'usage de l'IA.">
+        <x-button-link :href="route('admin.tickets.export')" variant="secondary">Exporter les tickets (CSV)</x-button-link>
+    </x-page-header>
 
-    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <x-stat-tile label="Tickets ouverts" :value="$sla['open']" />
         <x-stat-tile label="En retard" :value="$sla['late']" hint="Parmi les tickets ouverts" />
         <x-stat-tile label="Prise en charge" :value="Duration::humanize($averageMinutesToTake)" hint="Délai moyen" />
@@ -29,6 +31,9 @@
         <x-stat-tile label="Résolus dans les délais"
                      :value="$onTimeRate === null ? '—' : $onTimeRate.' %'"
                      :hint="$sla['resolved_on_time'].' sur '.$sla['resolved_total']" />
+        <x-stat-tile label="Satisfaction"
+                     :value="$satisfaction['average'] === null ? '—' : number_format($satisfaction['average'], 1, ',', ' ').' / 5'"
+                     :hint="$satisfaction['count'].' avis'" />
     </div>
 
     <div class="mt-6 grid gap-6 lg:grid-cols-2">
@@ -44,6 +49,14 @@
             @endif
         </x-card>
     </div>
+
+    <x-card title="Satisfaction des demandeurs" class="mt-6">
+        @if ($satisfaction['count'] === 0)
+            <p class="text-sm text-slate-500">Aucun avis pour le moment. Le demandeur donne le sien quand son ticket est résolu.</p>
+        @else
+            <x-bar-list :rows="$satisfaction['by_score']" />
+        @endif
+    </x-card>
 
     <x-card title="Suggestions de l'IA : décisions des techniciens" class="mt-6">
         @if ($suggestionTotal === 0)

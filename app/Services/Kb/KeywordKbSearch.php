@@ -4,6 +4,7 @@ namespace App\Services\Kb;
 
 use App\Models\KbArticle;
 use App\Services\Text\Keywords;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Str;
 
@@ -19,7 +20,7 @@ class KeywordKbSearch implements KbSearch
 
     public function __construct(private readonly Keywords $keywords) {}
 
-    public function search(string $query, int $limit = 5): Collection
+    public function search(string $query, int $limit = 5, bool $publicOnly = false): Collection
     {
         $wanted = $this->keywords->extract($query);
 
@@ -27,7 +28,10 @@ class KeywordKbSearch implements KbSearch
             return new Collection;
         }
 
-        $articles = KbArticle::query()->published()->get();
+        $articles = KbArticle::query()
+            ->published()
+            ->when($publicOnly, fn (Builder $query) => $query->where('is_public', true))
+            ->get();
 
         $scores = [];
 

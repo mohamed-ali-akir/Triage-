@@ -22,6 +22,37 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Attachments
+    |--------------------------------------------------------------------------
+    |
+    | Files joined to a ticket (a screenshot, a PDF, a log). Only harmless types
+    | are accepted, and the files live on a private disk: they are only reachable
+    | through the application, which checks who may read the ticket.
+    |
+    */
+
+    'attachments' => [
+        'disk' => 'local',
+        'extensions' => ['png', 'jpg', 'jpeg', 'pdf', 'txt'],
+        'max_size_kb' => 5 * 1024,
+        'max_files_per_upload' => 3,
+        'max_per_ticket' => 10,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Automatic closing
+    |--------------------------------------------------------------------------
+    |
+    | Days a ticket stays "resolved" before it is closed automatically. During
+    | that time the requester can reopen it; once closed, they create a new one.
+    |
+    */
+
+    'auto_close_days' => (int) env('TICKET_AUTO_CLOSE_DAYS', 7),
+
+    /*
+    |--------------------------------------------------------------------------
     | Retention (GDPR)
     |--------------------------------------------------------------------------
     |

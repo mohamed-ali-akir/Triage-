@@ -23,6 +23,8 @@ entraînement d'un modèle d'IA par l'application.
 | Secret de double authentification (chiffré) | table `users` | Authentification renforcée |
 | Titre et description des tickets | table `tickets` | Traiter la demande |
 | Messages du fil de discussion | table `ticket_messages` | Échanger avec le demandeur |
+| Pièces jointes (captures d'écran, PDF, texte) | table `ticket_attachments` et disque privé | Décrire le problème |
+| Note de satisfaction et commentaire | table `tickets` | Mesurer la qualité du support |
 | Historique des tickets (qui a fait quoi, quand) | table `ticket_events` | Traçabilité |
 | Adresse IP et navigateur de la session | table `sessions` | Sécurité de la connexion |
 
@@ -34,7 +36,8 @@ numéro de téléphone) sans que l'application le demande. Le formulaire rappell
 
 - La table `notifications` ne contient que le numéro du ticket et une phrase générique.
 - La table `ai_logs` n'a aucune colonne de texte : elle ne peut contenir ni prompt ni réponse.
-- Il n'y a pas de pièces jointes.
+- Les pièces jointes ne sont jamais envoyées à l'IA. Une capture d'écran peut montrer des données
+  personnelles : elle est supprimée du disque avec le contenu du ticket, à la purge.
 
 ## 3. Envoi de données à un fournisseur d'IA
 
@@ -68,8 +71,8 @@ procédures et ne doivent pas contenir de données personnelles.
 
 | Donnée | Durée | Mécanisme |
 |---|---|---|
-| Contenu d'un ticket clos ou résolu (titre, description, messages, brouillons de l'IA) | 24 mois après la clôture, ou après la résolution si le ticket n'a jamais été clos | Commande planifiée `triage:purge-old-tickets`, chaque nuit |
-| Statistiques d'un ticket (catégorie, priorité, dates, historique) | Sans limite, sans contenu | Conservées après la purge : elles n'identifient plus personne |
+| Contenu d'un ticket clos ou résolu (titre, description, messages, pièces jointes, commentaire de satisfaction, brouillons de l'IA) | 24 mois après la clôture, ou après la résolution si le ticket n'a jamais été clos | Commande planifiée `triage:purge-old-tickets`, chaque nuit |
+| Statistiques d'un ticket (catégorie, priorité, dates, historique, note de satisfaction) | Sans limite, sans contenu | Conservées après la purge : elles n'identifient plus personne |
 | Compte d'un salarié parti | Désactivé au départ, anonymisé sur demande | Écran d'administration, puis `triage:anonymize-user` |
 | Sessions | 2 heures d'inactivité | Configuration de Laravel |
 | Journal de l'IA | Sans limite | Ne contient aucune donnée personnelle |

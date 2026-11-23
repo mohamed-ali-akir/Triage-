@@ -17,6 +17,8 @@ une priorité et une réponse ; **un technicien valide toujours avant toute acti
 | 4 | Évaluation de l'IA, modèle local, tableau de bord, délais cibles, purge RGPD | Terminée |
 | 5a | API REST du technicien (Sanctum) | Terminée |
 | 5b | Application Android du technicien (dossier `mobile/`) | Terminée, testée sur émulateur par la CI |
+| 6 | Sécurité : audit et 16 correctifs | Terminée |
+| 7 | Pour les entreprises : centre d'aide, pièces jointes, satisfaction, affectation, export | Terminée |
 
 ## Documentation
 
@@ -25,6 +27,7 @@ une priorité et une réponse ; **un technicien valide toujours avant toute acti
 - [Journal des décisions techniques](docs/DECISIONS.md)
 - [Protection des données personnelles (RGPD)](docs/RGPD.md)
 - [Sécurité : audit, corrections et limites](docs/SECURITE.md)
+- [Feuille de route : Triage face aux helpdesks du marché](docs/FEUILLE_DE_ROUTE.md)
 - [API REST de l'application mobile](docs/API.md)
 - [Application Android du technicien](mobile/README.md)
 - [Évaluations du tri par IA](docs/evaluations/README.md)
@@ -194,11 +197,31 @@ Avec `AI_PROVIDER=ollama`, le modèle tourne sur votre machine : aucune donnée 
 appel ne coûte rien. Installez [Ollama](https://ollama.com), téléchargez un modèle
 (`ollama pull llama3.2`), puis réglez `OLLAMA_MODEL` dans `.env`.
 
+## Centre d'aide, pièces jointes et satisfaction
+
+Ces fonctions viennent de la comparaison avec les helpdesks du marché
+([docs/FEUILLE_DE_ROUTE.md](docs/FEUILLE_DE_ROUTE.md)).
+
+- **Centre d'aide.** Un administrateur ouvre un article à tous les salariés. Ils le lisent dans
+  le centre d'aide, et il leur est suggéré pendant qu'ils saisissent le titre d'un ticket. Un
+  article reste interne tant que personne n'en décide autrement.
+- **Pièces jointes.** Captures d'écran, PDF et fichiers texte (3 fichiers de 5 Mo au plus par
+  envoi), à la création du ticket ou ensuite. Les fichiers sont stockés hors du dossier public.
+- **Satisfaction.** Quand son ticket est résolu, le demandeur donne une note de 1 à 5 et un
+  commentaire facultatif.
+- **Affectation.** Un administrateur ou un technicien donne un ticket trié à un collègue.
+- **Clôture automatique.** Un ticket résolu depuis 7 jours sans réaction est clos
+  (`TICKET_AUTO_CLOSE_DAYS`).
+
+![Articles suggérés pendant la saisie d'un ticket](docs/captures/centre-aide-suggestions.png)
+
 ## Tableau de bord
 
 L'administrateur dispose d'un tableau de bord : tickets par statut et par catégorie, délais
-moyens, tickets en retard par rapport aux délais cibles (`config/tickets.php`), décisions des
-techniciens sur les suggestions de l'IA, consommation de l'IA par jour.
+moyens, tickets en retard par rapport aux délais cibles (`config/tickets.php`), satisfaction
+des demandeurs, décisions des techniciens sur les suggestions de l'IA, consommation de l'IA par
+jour. Le bouton « Exporter les tickets (CSV) » produit un fichier lisible par un tableur, sans
+les descriptions ni les messages.
 
 ![Tableau de bord](docs/captures/tableau-de-bord.png)
 
@@ -251,8 +274,9 @@ php artisan queue:work
 
 Sans ce processus, l'application fonctionne mais les notifications restent en attente.
 
-Le planificateur de Laravel lance deux tâches : il envoie en tri manuel les tickets que l'IA
-n'a pas traités à temps (par exemple si le worker est arrêté), et il purge chaque nuit les
+Le planificateur de Laravel lance quatre tâches : il envoie en tri manuel les tickets que l'IA
+n'a pas traités à temps (par exemple si le worker est arrêté), il clôt les tickets résolus
+depuis plusieurs jours, il supprime les jetons mobiles expirés et il purge chaque nuit les
 tickets trop anciens. En production, une seule ligne de cron suffit ; en développement,
 lancez-le à la main :
 

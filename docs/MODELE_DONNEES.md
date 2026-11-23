@@ -268,3 +268,26 @@ Une seule colonne s'ajoute : `users.must_change_password`. Elle vaut vrai tant q
 passe est celui qu'un administrateur a choisi ; l'utilisateur doit alors le remplacer avant de
 pouvoir utiliser l'application. Le journal de sécurité n'est pas une table : c'est un fichier
 (`storage/logs/audit-*.log`), décrit dans `SECURITE.md`.
+
+## 11. Améliorations pour les entreprises
+
+```mermaid
+erDiagram
+    TICKET ||--o{ TICKET_ATTACHMENT : "porte"
+    USER |o--o{ TICKET_ATTACHMENT : "dépose"
+
+    TICKET_ATTACHMENT {
+        int id PK
+        string original_name
+        string path
+        string mime_type
+        int size
+    }
+```
+
+- **ticket_attachments** (id PK, #ticket_id, #user_id, original_name, path, mime_type, size,
+  created_at, updated_at). `path` est un nom aléatoire sur le disque privé ; `original_name`
+  n'est qu'affiché.
+- **tickets** reçoit `satisfaction_score` (1 à 5), `satisfaction_comment` et `rated_at`.
+- **kb_articles** reçoit `is_public` : vrai quand l'article est ouvert à tous les salariés dans le
+  centre d'aide. Faux par défaut.

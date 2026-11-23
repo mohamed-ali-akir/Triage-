@@ -17,6 +17,7 @@ class KbArticleRequest extends FormRequest
             'content' => ['required', 'string', 'min:20', 'max:20000'],
             'category_id' => ['nullable', 'integer', 'exists:categories,id'],
             'is_published' => ['required', 'boolean'],
+            'is_public' => ['required', 'boolean'],
         ];
     }
 }

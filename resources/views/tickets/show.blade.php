@@ -9,6 +9,10 @@
                 <p class="whitespace-pre-line text-sm leading-relaxed text-slate-700">{{ $ticket->description }}</p>
             </x-card>
 
+            @include('tickets._attachments')
+
+            @include('tickets._rating')
+
             <livewire:ticket-thread :ticket="$ticket" />
         </div>
 

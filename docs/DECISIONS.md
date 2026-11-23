@@ -555,3 +555,52 @@ En HTTP vers une autre machine, le contenu des tickets traverserait le réseau e
 `OllamaProvider` le refuse, sauf si `OLLAMA_ALLOW_INSECURE=true` dit que le réseau est déjà
 chiffré. Un refus par défaut vaut mieux qu'un avertissement que personne ne lit.
 
+## Améliorations pour les entreprises
+
+La comparaison avec les helpdesks du marché est dans `FEUILLE_DE_ROUTE.md`.
+
+### D82 — Un centre d'aide, interne par défaut
+
+Le libre-service est ce qui réduit le plus le nombre de tickets : le salarié trouve la réponse
+avant d'écrire. Un article n'y entre que si un administrateur l'ouvre aux salariés ; par défaut
+il reste interne. Pour un salarié, un article interne renvoie la même erreur 404 qu'un article
+qui n'existe pas : l'adresse ne révèle rien.
+
+### D83 — Des articles suggérés pendant la saisie
+
+Le champ « Titre » du nouveau ticket est un petit composant Livewire qui cherche des articles
+du centre d'aide. Il réutilise la recherche de la base de connaissances, limitée aux articles
+publics, même quand un technicien tape : une procédure interne n'est jamais suggérée ici.
+
+### D84 — Des pièces jointes, mais peu de types
+
+Seuls les types utiles et inoffensifs sont acceptés (images, PDF, texte). Le type est lu dans
+le contenu du fichier et doit correspondre à son extension. Les fichiers vont sur un disque
+privé, sous un nom aléatoire, et ne sortent que par un contrôleur qui vérifie le droit de lire
+le ticket, toujours en téléchargement. Aucun fichier n'est donc jamais exécuté ni affiché.
+
+### D85 — La satisfaction en une question
+
+Une note de 1 à 5 et un commentaire facultatif, une seule fois, quand le ticket est résolu ou
+clos. Deux colonnes sur le ticket suffisent : une table à part n'apporterait rien pour une
+relation un pour un. La purge efface le commentaire et garde la note pour les statistiques.
+
+### D86 — Donner un ticket à un collègue
+
+Un technicien ne pouvait que prendre un ticket pour lui. Le support (techniciens et
+administrateurs) peut maintenant le donner à un technicien actif, qui en est notifié.
+L'historique enregistre qui a décidé, pas seulement qui a reçu le ticket.
+
+### D87 — Un export CSV sans formule
+
+L'export sert aux rapports et évite d'enfermer les données dans l'outil. Il ne contient ni
+description ni message. Une cellule qui commence par `=`, `+`, `-` ou `@` est précédée d'une
+apostrophe : sans cela, un ticket intitulé comme une formule s'exécuterait dans le tableur de
+l'administrateur. L'export est journalisé.
+
+### D88 — La clôture automatique
+
+Un ticket résolu que son demandeur ne rouvre pas est clos au bout de 7 jours, par le système.
+La file reste lisible et la purge RGPD part d'une date claire. Le demandeur garde 7 jours pour
+rouvrir, et peut encore donner son avis après la clôture.
+

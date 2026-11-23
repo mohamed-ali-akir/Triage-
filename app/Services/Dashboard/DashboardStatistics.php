@@ -96,6 +96,33 @@ class DashboardStatistics
     }
 
     /**
+     * What requesters think of the resolution of their tickets: average score out of 5,
+     * number of opinions, and how many tickets received each score (5 first).
+     *
+     * @return array{average: float|null, count: int, by_score: list<array{label: string, count: int}>}
+     */
+    public function satisfaction(): array
+    {
+        $counts = Ticket::query()->toBase()
+            ->whereNotNull('satisfaction_score')
+            ->selectRaw('satisfaction_score, COUNT(*) as total')
+            ->groupBy('satisfaction_score')
+            ->pluck('total', 'satisfaction_score');
+
+        $count = (int) $counts->sum();
+        $sum = $counts->reduce(fn (int $carry, int|string $total, int|string $score): int => $carry + (int) $score * (int) $total, 0);
+
+        return [
+            'average' => $count === 0 ? null : round($sum / $count, 1),
+            'count' => $count,
+            'by_score' => array_map(
+                fn (int $score): array => ['label' => "{$score} / 5", 'count' => (int) ($counts[$score] ?? 0)],
+                [5, 4, 3, 2, 1],
+            ),
+        ];
+    }
+
+    /**
      * What technicians did with the suggestions of the AI.
      *
      * @return list<array{status: AiSuggestionStatus, count: int}>
