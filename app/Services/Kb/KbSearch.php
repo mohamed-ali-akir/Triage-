@@ -12,7 +12,8 @@ use Illuminate\Database\Eloquent\Collection;
 interface KbSearch
 {
     /**
+     * @param  bool  $publicOnly  only the articles opened to the help center of the employees
      * @return Collection<int, KbArticle> most relevant first
      */
-    public function search(string $query, int $limit = 5): Collection;
+    public function search(string $query, int $limit = 5, bool $publicOnly = false): Collection;
 }

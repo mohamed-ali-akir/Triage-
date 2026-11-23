@@ -34,11 +34,9 @@ Route::middleware('auth')->group(function () {
     // The technician queue is a Livewire component embedded in a plain Blade view.
     Route::view('/queue', 'queue.index')->middleware('can:view-queue')->name('queue.index');
 
-    // The knowledge base, read-only, for the support staff.
-    Route::middleware('can:view-queue')->group(function () {
-        Route::get('/kb', [KbController::class, 'index'])->name('kb.index');
-        Route::get('/kb/{kbArticle}', [KbController::class, 'show'])->name('kb.show');
-    });
+    // The knowledge base, read-only. Employees see the help center only (see KbController).
+    Route::get('/kb', [KbController::class, 'index'])->name('kb.index');
+    Route::get('/kb/{kbArticle}', [KbController::class, 'show'])->name('kb.show');
 
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');

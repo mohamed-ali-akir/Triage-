@@ -6,7 +6,7 @@
     <x-form.textarea name="content" :value="$article->content" rows="14" required class="font-mono" />
 </x-form.field>
 
-<div class="grid gap-4 sm:grid-cols-2">
+<div class="grid gap-4 sm:grid-cols-3">
     <x-form.field name="category_id" label="Catégorie">
         <x-form.select name="category_id">
             <option value="">— Aucune —</option>
@@ -15,6 +15,13 @@
                     {{ $category->name }}
                 </option>
             @endforeach
+        </x-form.select>
+    </x-form.field>
+
+    <x-form.field name="is_public" label="Visibilité" hint="Un article du centre d'aide est lisible par tous les salariés et leur est suggéré quand ils créent un ticket.">
+        <x-form.select name="is_public">
+            <option value="0" @selected((string) old('is_public', (int) $article->is_public) === '0')>Interne : support seulement</option>
+            <option value="1" @selected((string) old('is_public', (int) $article->is_public) === '1')>Centre d'aide : tous les salariés</option>
         </x-form.select>
     </x-form.field>
 

@@ -92,11 +92,13 @@ test('support staff can browse and search the knowledge base', function (string 
         ->assertSee('Générer un nouveau certificat');
 })->with(['technician', 'admin']);
 
-test('a regular user has no access to the knowledge base', function () {
+test('an internal article does not exist for a regular user', function () {
     $user = User::factory()->create();
 
-    $this->actingAs($user)->get('/kb')->assertForbidden();
-    $this->actingAs($user)->get("/kb/{$this->vpn->id}")->assertForbidden();
+    // The three articles of this file are internal procedures.
+    $this->actingAs($user)->get('/kb')->assertOk()->assertDontSee('certificat VPN');
+    $this->actingAs($user)->get('/kb?q=certificat+VPN')->assertOk()->assertDontSee('Renouveler un certificat');
+    $this->actingAs($user)->get("/kb/{$this->vpn->id}")->assertNotFound();
 });
 
 test('a draft cannot be opened by its address', function () {

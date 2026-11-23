@@ -3,6 +3,10 @@
         @if ($article->category)
             <x-badge>{{ $article->category->name }}</x-badge>
         @endif
+
+        @if (auth()->user()->isStaff() && ! $article->is_public)
+            <x-badge color="amber">Interne : non visible des salariés</x-badge>
+        @endif
     </x-page-header>
 
     <x-card class="max-w-3xl">
@@ -11,6 +15,6 @@
     </x-card>
 
     <p class="mt-4 text-sm">
-        <a href="{{ route('kb.index') }}" class="text-indigo-600 hover:underline">← Retour à la base de connaissances</a>
+        <a href="{{ route('kb.index') }}" class="text-indigo-600 hover:underline">← Retour aux articles</a>
     </p>
 </x-layouts.app>

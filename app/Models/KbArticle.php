@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Str;
 
-#[Fillable(['title', 'content', 'category_id', 'is_published'])]
+#[Fillable(['title', 'content', 'category_id', 'is_published', 'is_public'])]
 class KbArticle extends Model
 {
     /** @use HasFactory<KbArticleFactory> */
@@ -21,6 +21,7 @@ class KbArticle extends Model
      */
     protected $attributes = [
         'is_published' => false,
+        'is_public' => false,
     ];
 
     /**
@@ -30,6 +31,7 @@ class KbArticle extends Model
     {
         return [
             'is_published' => 'boolean',
+            'is_public' => 'boolean',
         ];
     }
 
@@ -47,6 +49,21 @@ class KbArticle extends Model
     public function scopePublished(Builder $query): void
     {
         $query->where('is_published', true);
+    }
+
+    /**
+     * What a person may read: the support staff reads every published article,
+     * an employee reads only those opened to the help center.
+     *
+     * @param  Builder<KbArticle>  $query
+     */
+    public function scopeVisibleTo(Builder $query, User $user): void
+    {
+        $query->where('is_published', true);
+
+        if (! $user->isStaff()) {
+            $query->where('is_public', true);
+        }
     }
 
     /**

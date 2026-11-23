@@ -24,6 +24,7 @@
                     <td class="px-4 py-3">
                         @if ($article->is_published)
                             <x-badge color="emerald">Publié</x-badge>
+                            <x-badge :color="$article->is_public ? 'indigo' : 'amber'">{{ $article->is_public ? 'Centre d\'aide' : 'Interne' }}</x-badge>
                         @else
                             <x-badge color="slate">Brouillon</x-badge>
                         @endif

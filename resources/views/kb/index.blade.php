@@ -1,5 +1,13 @@
-<x-layouts.app title="Base de connaissances">
-    <x-page-header title="Base de connaissances" subtitle="Les procédures et solutions connues du support." />
+@php($forStaff = auth()->user()->isStaff())
+
+<x-layouts.app :title="$forStaff ? 'Base de connaissances' : 'Centre d\'aide'">
+    @if ($forStaff)
+        <x-page-header title="Base de connaissances" subtitle="Les procédures et solutions connues du support." />
+    @else
+        <x-page-header title="Centre d'aide" subtitle="Les réponses aux questions les plus fréquentes. Si vous ne trouvez pas, créez un ticket.">
+            <x-button-link :href="route('tickets.create')">Nouveau ticket</x-button-link>
+        </x-page-header>
+    @endif
 
     <form method="GET" action="{{ route('kb.index') }}" class="mb-6 flex gap-2">
         <label for="q" class="sr-only">Rechercher un article</label>
@@ -11,7 +19,7 @@
     @if ($articles->isEmpty())
         <x-card class="text-center">
             <p class="text-sm text-slate-600">
-                {{ $query === '' ? 'La base de connaissances est vide.' : 'Aucun article ne correspond à cette recherche.' }}
+                {{ $query === '' ? 'Aucun article pour le moment.' : 'Aucun article ne correspond à cette recherche.' }}
             </p>
         </x-card>
     @else
@@ -22,6 +30,10 @@
 
                     @if ($article->category)
                         <x-badge class="ml-2">{{ $article->category->name }}</x-badge>
+                    @endif
+
+                    @if ($forStaff && ! $article->is_public)
+                        <x-badge color="amber" class="ml-1">Interne</x-badge>
                     @endif
 
                     <p class="mt-1 text-sm text-slate-600">{{ Str::limit(strip_tags($article->contentAsHtml()), 180) }}</p>

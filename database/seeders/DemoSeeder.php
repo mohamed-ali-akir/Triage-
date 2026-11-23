@@ -334,11 +334,22 @@ class DemoSeeder extends Seeder
                 MD],
         ];
 
+        // Opened to every employee in the help center. The others are procedures for the support only.
+        $helpCenter = [
+            'Bourrage papier sur une imprimante multifonction',
+            'Outlook affiche « Déconnecté »',
+            'Reconnaître et signaler un e-mail d\'hameçonnage',
+            'Wifi lent ou instable dans une salle de réunion',
+            'Demander l\'installation d\'un logiciel',
+            'Où enregistrer ses documents pour qu\'ils soient sauvegardés',
+        ];
+
         foreach ($articles as [$slug, $published, $title, $content]) {
             KbArticle::updateOrCreate(['title' => $title], [
                 'content' => $content,
                 'category_id' => Category::query()->where('slug', $slug)->value('id'),
                 'is_published' => $published,
+                'is_public' => in_array($title, $helpCenter, true),
             ]);
         }
     }

@@ -5,9 +5,8 @@
         <form method="POST" action="{{ route('tickets.store') }}" class="space-y-4">
             @csrf
 
-            <x-form.field name="title" label="Titre" hint="Résumez le problème en une phrase.">
-                <x-form.input name="title" required minlength="5" maxlength="150" autofocus />
-            </x-form.field>
+            {{-- The title field suggests help-center articles while the employee types. --}}
+            <livewire:ticket-title-field :title="old('title', '')" />
 
             <x-form.field name="description" label="Description" hint="Que se passe-t-il ? Depuis quand ? Sur quel poste ou quel logiciel ?">
                 <x-form.textarea name="description" required minlength="10" maxlength="5000" />
