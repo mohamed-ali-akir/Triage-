@@ -50,6 +50,8 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::loginView(fn () => view('auth.login'));
         Fortify::requestPasswordResetLinkView(fn () => view('auth.forgot-password'));
         Fortify::resetPasswordView(fn (Request $request) => view('auth.reset-password', ['request' => $request]));
+        Fortify::twoFactorChallengeView(fn () => view('auth.two-factor-challenge'));
+        Fortify::confirmPasswordView(fn () => view('auth.confirm-password'));
     }
 
     private function configureRateLimiting(): void
@@ -61,6 +63,11 @@ class FortifyServiceProvider extends ServiceProvider
             );
 
             return Limit::perMinute(5)->by($throttleKey);
+        });
+
+        // Five attempts per minute on the two-factor code of one pending login.
+        RateLimiter::for('two-factor', function (Request $request) {
+            return Limit::perMinute(5)->by((string) $request->session()->get('login.id'));
         });
     }
 }

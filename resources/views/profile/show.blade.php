@@ -1,5 +1,5 @@
 <x-layouts.app title="Mon profil">
-    <x-page-header title="Mon profil" :subtitle="auth()->user()->email" />
+    <x-page-header title="Mon profil" :subtitle="$user->email" />
 
     <div class="grid gap-6 lg:grid-cols-2">
         <x-card title="Changer de mot de passe">
@@ -28,5 +28,7 @@
                 <x-button>Enregistrer</x-button>
             </form>
         </x-card>
+
+        @include('profile._two-factor')
     </div>
 </x-layouts.app>

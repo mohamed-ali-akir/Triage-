@@ -35,6 +35,7 @@ return [
 
     'limiters' => [
         'login' => 'login',
+        'two-factor' => 'two-factor',
     ],
 
     'views' => true,
@@ -52,6 +53,12 @@ return [
     'features' => [
         Features::resetPasswords(),
         Features::updatePasswords(),
+        // Two-factor authentication (TOTP). "confirm" asks for a first valid code
+        // before it is switched on, so nobody locks themselves out by mistake.
+        Features::twoFactorAuthentication([
+            'confirm' => true,
+            'confirmPassword' => true,
+        ]),
     ],
 
 ];
