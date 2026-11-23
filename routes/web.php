@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AiLogController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\KbArticleController;
+use App\Http\Controllers\Admin\TicketExportController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\AiSuggestionController;
 use App\Http\Controllers\HomeController;
@@ -53,6 +54,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('admin')->name('admin.')->middleware('can:access-admin')->group(function () {
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('/ai-logs', [AiLogController::class, 'index'])->name('ai-logs.index');
+        Route::get('/tickets/export', TicketExportController::class)->middleware('throttle:6,1')->name('tickets.export');
         Route::resource('users', UserController::class)->except(['show', 'destroy']);
         Route::resource('categories', CategoryController::class)->except(['show']);
         Route::resource('kb-articles', KbArticleController::class)->except(['show']);

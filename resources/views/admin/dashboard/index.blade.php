@@ -19,7 +19,9 @@
 @endphp
 
 <x-layouts.app title="Tableau de bord">
-    <x-page-header title="Tableau de bord" subtitle="L'activité du support et l'usage de l'IA." />
+    <x-page-header title="Tableau de bord" subtitle="L'activité du support et l'usage de l'IA.">
+        <x-button-link :href="route('admin.tickets.export')" variant="secondary">Exporter les tickets (CSV)</x-button-link>
+    </x-page-header>
 
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <x-stat-tile label="Tickets ouverts" :value="$sla['open']" />
