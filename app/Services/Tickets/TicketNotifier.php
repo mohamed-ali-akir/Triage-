@@ -5,6 +5,7 @@ namespace App\Services\Tickets;
 use App\Enums\TicketStatus;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Notifications\TicketAssignedNotification;
 use App\Notifications\TicketMessagePostedNotification;
 use App\Notifications\TicketStatusChangedNotification;
 
@@ -22,6 +23,14 @@ class TicketNotifier
         }
 
         $this->otherParty($ticket, $actor)?->notify(new TicketStatusChangedNotification($ticket, $status));
+    }
+
+    /**
+     * A technician who received a ticket from someone else is told about it.
+     */
+    public function assigned(Ticket $ticket, User $technician): void
+    {
+        $technician->notify(new TicketAssignedNotification($ticket));
     }
 
     public function messagePosted(Ticket $ticket, User $author): void

@@ -98,7 +98,7 @@ class TicketWorkflow
      *
      * @throws TicketNotAssignable
      */
-    public function assign(Ticket $ticket, User $technician): Ticket
+    public function assign(Ticket $ticket, User $technician, ?User $actor = null): Ticket
     {
         if (! $ticket->status->acceptsAssignment()) {
             throw TicketNotAssignable::wrongStatus($ticket->status);
@@ -108,7 +108,10 @@ class TicketWorkflow
             throw TicketNotAssignable::notTriaged();
         }
 
-        return DB::transaction(function () use ($ticket, $technician): Ticket {
+        // Who decided: the technician themselves, or the colleague who gave them the ticket.
+        $actor ??= $technician;
+
+        return DB::transaction(function () use ($ticket, $technician, $actor): Ticket {
             $previousAssigneeId = $ticket->assignee_id;
 
             $ticket->assignee_id = $technician->id;
@@ -119,11 +122,15 @@ class TicketWorkflow
                 TicketEventType::Assigned,
                 $previousAssigneeId === null ? null : (string) $previousAssigneeId,
                 (string) $technician->id,
-                $technician,
+                $actor,
             );
 
             if ($ticket->status === TicketStatus::PendingValidation) {
-                $this->transition($ticket, TicketStatus::Assigned, $technician);
+                $this->transition($ticket, TicketStatus::Assigned, $actor);
+            }
+
+            if (! $actor->is($technician)) {
+                $this->notifier->assigned($ticket, $technician);
             }
 
             return $ticket;

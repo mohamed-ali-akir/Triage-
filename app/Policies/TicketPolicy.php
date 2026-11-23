@@ -83,6 +83,14 @@ class TicketPolicy
     }
 
     /**
+     * The support staff (technicians and administrators) gives a ticket to a chosen technician.
+     */
+    public function assignTo(User $user, Ticket $ticket): bool
+    {
+        return $user->isStaff();
+    }
+
+    /**
      * The requester gives their opinion once, when the ticket is resolved or closed.
      */
     public function rate(User $user, Ticket $ticket): bool

@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use App\Actions\Tickets\CreateTicket;
 use App\Actions\Tickets\StoreTicketAttachments;
 use App\Enums\TicketPriority;
+use App\Enums\UserRole;
 use App\Http\Requests\StoreTicketRequest;
 use App\Models\Category;
 use App\Models\Ticket;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -52,7 +54,7 @@ class TicketController extends Controller
             ->with('success', 'Votre ticket a été enregistré. Un technicien va le prendre en charge.');
     }
 
-    public function show(Ticket $ticket): View
+    public function show(Request $request, Ticket $ticket): View
     {
         Gate::authorize('view', $ticket);
 
@@ -63,6 +65,10 @@ class TicketController extends Controller
             // Used by the triage form, shown to technicians only.
             'categories' => Category::query()->active()->orderBy('name')->get(),
             'priorities' => TicketPriority::cases(),
+            // The technicians a member of the support staff can give this ticket to.
+            'technicians' => $request->user()->can('assignTo', $ticket)
+                ? User::query()->where('role', UserRole::Technician)->where('is_active', true)->whereKeyNot($ticket->assignee_id ?? 0)->orderBy('name')->get()
+                : collect(),
         ]);
     }
 }
