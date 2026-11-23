@@ -16,7 +16,7 @@ une priorité et une réponse ; **un technicien valide toujours avant toute acti
 | 3 | Base de connaissances, réponses suggérées avec sources, détection des doublons | Terminée |
 | 4 | Évaluation de l'IA, modèle local, tableau de bord, délais cibles, purge RGPD | Terminée |
 | 5a | API REST du technicien (Sanctum) | Terminée |
-| 5b | Application Android du technicien (dossier `mobile/`) | Terminée, à essayer sur un émulateur |
+| 5b | Application Android du technicien (dossier `mobile/`) | Terminée, testée sur émulateur par la CI |
 
 ## Documentation
 

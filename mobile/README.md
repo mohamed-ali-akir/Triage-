@@ -86,7 +86,8 @@ php artisan migrate:fresh --seed && php artisan serve    # dans un premier termi
 ./gradlew :app:connectedDebugAndroidTest                  # émulateur démarré
 ```
 
-La CI exécute ce test à chaque pull request, sur un émulateur Android.
+La CI exécute ce test à chaque pull request, sur un émulateur Android 14 : elle démarre un
+serveur Triage avec les données de démonstration, puis lance l'application.
 
 ## Choix techniques
 
