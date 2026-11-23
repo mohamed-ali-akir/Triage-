@@ -45,6 +45,28 @@ Une évaluation complète avec l'IA fait 60 appels (jusqu'à 120 si des réponse
   personne que le jeu de test. Sur de vrais tickets, elle ferait moins bien.
 - **Le prompt ne contient aucun exemple tiré du jeu de test**, pour ne pas fausser la mesure.
 
+## Étiquettes à relire en priorité
+
+Quand les trois méthodes (mots-clés et deux modèles) contredisent la même étiquette, soit le
+ticket est difficile, soit l'étiquette est discutable. Dans le rapport du 23 novembre, c'est le
+cas de ces tickets : ce sont les premiers à relire dans `database/data/evaluation-tickets.json`.
+
+| N° | Ticket | Étiquette actuelle | Ce que proposent les trois méthodes |
+|---|---|---|---|
+| 14 | Lecteur P: inaccessible pour toute la comptabilité | `reseau` | `acces-comptes` (2 fois), `materiel` |
+| 18 | Ouverture d'un accès pour un prestataire | `reseau` / Basse | `acces-comptes` / Normale (3 fois) |
+| 27 | Nouveau téléphone : plus de codes de double authentification | `acces-comptes` | `materiel` (2 fois), `messagerie` |
+| 45 | Création d'une adresse partagée contact@ | `messagerie` | `autre` (2 fois), `materiel` |
+| 53 | Commande d'un téléphone portable professionnel | `autre` / Basse | `materiel` / Normale (3 fois) |
+| 55 | Déménagement de quatre postes vendredi | `autre` | `materiel` (2 fois), `reseau` |
+| 26 | Demande de droits administrateur | Basse | Normale (3 fois) |
+| 35 | Le correcteur orthographique de Word a disparu | Basse | Normale (3 fois) |
+
+Une étiquette contredite n'est pas forcément fausse : le ticket 32 (« URGENT !!! Installation de
+Photoshop ») est volontairement en priorité basse, et les trois méthodes se laissent prendre par
+le mot « urgent ». C'est à l'étudiant de trancher. Après une correction, relancer l'évaluation :
+les chiffres d'un rapport ne valent que pour les étiquettes du jour où il a été produit.
+
 ## Rapports
 
 | Fichier | Contenu |
