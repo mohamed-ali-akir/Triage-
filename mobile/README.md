@@ -28,7 +28,7 @@ quelques secondes, sans émulateur.
 ```
 app/src/main/java/fr/triage/mobile/
 ├── MainActivity.kt, TriageApplication.kt, AppContainer.kt
-├── data/SharedPreferencesTokenStore.kt
+├── data/KeystoreTokenStore.kt     le jeton, chiffré par le Keystore Android
 └── ui/
     ├── Navigation.kt          les trois écrans et leurs enchaînements
     ├── login/                 écran de connexion
@@ -64,6 +64,20 @@ Remplacez `192.168.1.20` par l'adresse de votre ordinateur. L'adresse doit finir
 
 Le HTTP non chiffré n'est accepté que dans la version de débogage. Une version publiée doit
 utiliser HTTPS.
+
+### Épinglage du certificat (facultatif)
+
+Pour une version publiée, l'application peut n'accepter que le certificat du serveur Triage,
+même si le téléphone en approuve d'autres (réseau wifi piégé, proxy d'interception) :
+
+```bash
+./gradlew :app:assembleRelease \
+  -Ptriage.apiBaseUrl=https://support.exemple.fr/api/v1/ \
+  -Ptriage.certificatePins=sha256/AAAA...=,sha256/BBBB...=
+```
+
+Donnez deux empreintes (le certificat actuel et le suivant) : si le certificat change sans que
+l'application connaisse la nouvelle empreinte, elle ne peut plus se connecter.
 
 ## Tests
 
@@ -118,8 +132,8 @@ Android Studio propose de les mettre à jour avec son assistant de mise à nivea
 
 - Pas de mode hors connexion : sans réseau, l'application affiche une erreur.
 - La liste n'affiche que la première page (20 tickets).
-- Le jeton n'est pas chiffré par le Keystore Android. Il est protégé par le bac à sable de
-  l'application ; un chiffrement supplémentaire serait une amélioration.
+- Le jeton est chiffré par une clé du Keystore Android, mais il reste utilisable par quiconque
+  déverrouille le téléphone : il expire au bout de 7 jours et un changement de mot de passe le révoque.
 - Pas de notifications push.
 - L'application n'a été vue que sur l'émulateur de la CI, un petit écran de 320 dp de large,
   où le titre « Mes tickets » passe sur deux lignes. Elle n'a pas été essayée sur un vrai

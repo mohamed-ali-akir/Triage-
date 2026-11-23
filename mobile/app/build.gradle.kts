@@ -22,6 +22,11 @@ android {
         // The default, 10.0.2.2, is how the Android emulator reaches the computer it runs on.
         val apiBaseUrl = providers.gradleProperty("triage.apiBaseUrl").getOrElse("http://10.0.2.2:8000/api/v1/")
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
+
+        // Certificate pinning (optional): fingerprints of the server certificate, comma separated.
+        //   ./gradlew :app:assembleRelease -Ptriage.certificatePins=sha256/AAAA...=,sha256/BBBB...=
+        val certificatePins = providers.gradleProperty("triage.certificatePins").getOrElse("")
+        buildConfigField("String", "CERTIFICATE_PINS", "\"$certificatePins\"")
     }
 
     buildTypes {
