@@ -81,8 +81,10 @@
                     <td class="px-4 py-3">
                         @if ($ticket->isTriaged())
                             <x-ticket.priority-badge :priority="$ticket->priority" />
+                        @elseif ($ticket->pendingSuggestion)
+                            <x-badge color="violet">Suggestion IA</x-badge>
                         @else
-                            <x-badge color="amber">À trier</x-badge>
+                            <x-badge color="amber">Tri manuel</x-badge>
                         @endif
                     </td>
                     <td class="px-4 py-3 text-slate-600">{{ $ticket->category?->name ?? '—' }}</td>

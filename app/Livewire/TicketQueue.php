@@ -79,7 +79,7 @@ class TicketQueue extends Component
         $priority = TicketPriority::tryFrom($this->priority);
 
         return Ticket::query()
-            ->with(['requester', 'assignee', 'category'])
+            ->with(['requester', 'assignee', 'category', 'pendingSuggestion'])
             ->when($status !== null, fn (Builder $query) => $query->where('status', $status))
             ->when($status === null, fn (Builder $query) => $query->where('status', '!=', TicketStatus::Closed))
             ->when($priority !== null, fn (Builder $query) => $query->where('priority', $priority))

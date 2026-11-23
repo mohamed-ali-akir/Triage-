@@ -27,7 +27,7 @@ test('support staff can open the queue', function (string $state) {
         ->get('/queue')
         ->assertOk()
         ->assertSee('Souris sans fil défectueuse')
-        ->assertSee('À trier');
+        ->assertSee('Tri manuel');
 })->with(['technician', 'admin']);
 
 test('closed tickets are hidden unless asked for', function () {
