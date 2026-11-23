@@ -6,17 +6,20 @@ use App\Actions\Tickets\CreateTicket;
 use App\Actions\Tickets\PostTicketMessage;
 use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
+use App\Enums\TriageMode;
 use App\Enums\UserRole;
 use App\Models\Category;
 use App\Models\Department;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Services\Ai\SuggestionReviewer;
 use App\Services\Tickets\TicketWorkflow;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
 
 /**
- * Demonstration data: 1 administrator, 2 technicians, 5 users and tickets in every status.
+ * Demonstration data: 1 administrator, 2 technicians, 5 users, tickets in every status
+ * and AI suggestions in every state (pending, accepted, modified, rejected).
  *
  * Tickets are not inserted directly: they go through the same actions and workflow
  * as the real application, so their history and notifications are consistent.
@@ -29,6 +32,7 @@ class DemoSeeder extends Seeder
         private readonly CreateTicket $createTicket,
         private readonly PostTicketMessage $postMessage,
         private readonly TicketWorkflow $workflow,
+        private readonly SuggestionReviewer $reviewer,
     ) {}
 
     public function run(): void
@@ -36,6 +40,9 @@ class DemoSeeder extends Seeder
         // Deliver notifications immediately instead of queueing them, so that the
         // demo shows them even before a queue worker is started.
         config(['queue.default' => 'sync']);
+
+        // Seeding must never call a real AI: suggestions are written by hand below.
+        config(['ai.enabled' => false]);
 
         // The real current time, read before the clock is moved to simulate the past.
         $this->startedAt = Carbon::now();
@@ -85,7 +92,7 @@ class DemoSeeder extends Seeder
     /**
      * Play one scenario: create the ticket, then move it step by step up to its target status.
      *
-     * @param  array{title: string, description: string, requester: string, days_ago: int, status: TicketStatus, category?: string, priority?: TicketPriority, technician?: string, messages?: list<array{0: string, 1: string, 2?: bool}>, reopened?: bool}  $scenario
+     * @param  array{title: string, description: string, requester: string, days_ago: int, status: TicketStatus, category?: string, priority?: TicketPriority, technician?: string, messages?: list<array{0: string, 1: string, 2?: bool}>, reopened?: bool, ai?: array{0: string, 1: TicketPriority, 2: float}, ai_rejected?: bool}  $scenario
      * @param  array<string, User>  $users
      */
     private function play(array $scenario, array $users): void
@@ -106,15 +113,24 @@ class DemoSeeder extends Seeder
         ]);
 
         $technician = isset($scenario['technician']) ? $users[$scenario['technician']] : null;
+        $reviewer = $technician ?? $users['tech1'];
+
+        if (isset($scenario['ai'])) {
+            $this->storeSuggestion($ticket, $scenario['ai']);
+        }
+
+        if ($scenario['ai_rejected'] ?? false) {
+            $tick();
+            $this->reviewer->reject($ticket->pendingSuggestion()->firstOrFail(), $reviewer);
+        }
 
         if (isset($scenario['category'], $scenario['priority'])) {
             $tick();
-            $this->workflow->triage(
-                $ticket,
-                Category::query()->where('slug', $scenario['category'])->firstOrFail(),
-                $scenario['priority'],
-                $technician ?? $users['tech1'],
-            );
+            $category = Category::query()->where('slug', $scenario['category'])->firstOrFail();
+
+            $this->workflow->triage($ticket, $category, $scenario['priority'], $reviewer);
+            // Marks the suggestion "accepted" or "modified", as the triage form does.
+            $this->reviewer->recordManualTriage($ticket, $category, $scenario['priority'], $reviewer);
         }
 
         if ($technician !== null) {
@@ -122,6 +138,25 @@ class DemoSeeder extends Seeder
             $this->workflow->assign($ticket, $technician);
             $this->advance($ticket, $scenario, $requester, $technician, $users, $tick);
         }
+    }
+
+    /**
+     * Store what the classification job would have stored if the AI had been called.
+     *
+     * @param  array{0: string, 1: TicketPriority, 2: float}  $suggestion  category slug, priority, confidence
+     */
+    private function storeSuggestion(Ticket $ticket, array $suggestion): void
+    {
+        [$slug, $priority, $confidence] = $suggestion;
+
+        $ticket->triage_mode = TriageMode::Ai;
+        $ticket->save();
+
+        $ticket->suggestions()->create([
+            'category_id' => Category::query()->where('slug', $slug)->value('id'),
+            'priority' => $priority,
+            'confidence' => $confidence,
+        ]);
     }
 
     /**
@@ -173,7 +208,7 @@ class DemoSeeder extends Seeder
     }
 
     /**
-     * @return list<array{title: string, description: string, requester: string, days_ago: int, status: TicketStatus, category?: string, priority?: TicketPriority, technician?: string, messages?: list<array{0: string, 1: string, 2?: bool}>, reopened?: bool}>
+     * @return list<array{title: string, description: string, requester: string, days_ago: int, status: TicketStatus, category?: string, priority?: TicketPriority, technician?: string, messages?: list<array{0: string, 1: string, 2?: bool}>, reopened?: bool, ai?: array{0: string, 1: TicketPriority, 2: float}, ai_rejected?: bool}>
      */
     private function scenarios(): array
     {
@@ -183,6 +218,7 @@ class DemoSeeder extends Seeder
                 'description' => "Ma souris sans fil perd la connexion plusieurs fois par heure. J'ai déjà changé les piles.",
                 'requester' => 'user3', 'days_ago' => 12, 'status' => TicketStatus::Closed,
                 'category' => 'materiel', 'priority' => TicketPriority::Low, 'technician' => 'tech2',
+                'ai' => ['materiel', TicketPriority::Low, 0.95],
                 'messages' => [
                     ['tech2', 'Bonjour, le récepteur USB est sans doute défectueux. Je vous dépose une souris neuve cet après-midi.'],
                     ['user3', 'Parfait, merci beaucoup.'],
@@ -193,6 +229,7 @@ class DemoSeeder extends Seeder
                 'description' => 'Je voudrais savoir si les fichiers enregistrés sur mon bureau sont sauvegardés, ou seulement ceux du lecteur réseau.',
                 'requester' => 'user5', 'days_ago' => 10, 'status' => TicketStatus::Closed,
                 'category' => 'autre', 'priority' => TicketPriority::Low, 'technician' => 'tech1', 'reopened' => true,
+                'ai' => ['autre', TicketPriority::Low, 0.81],
                 'messages' => [
                     ['tech1', "Bonjour, seul le lecteur réseau P: est sauvegardé chaque nuit. Le bureau ne l'est pas."],
                     ['user5', 'Merci. Pouvez-vous déplacer mon dossier « Bilans » vers le lecteur réseau ?'],
@@ -203,6 +240,8 @@ class DemoSeeder extends Seeder
                 'description' => "Depuis lundi, mon deuxième écran reste noir quand je branche mon portable sur la station d'accueil.",
                 'requester' => 'user2', 'days_ago' => 8, 'status' => TicketStatus::Closed,
                 'category' => 'materiel', 'priority' => TicketPriority::Normal, 'technician' => 'tech1',
+                // The AI hesitated: the technician corrected the category.
+                'ai' => ['logiciel', TicketPriority::Normal, 0.62],
                 'messages' => [
                     ['tech1', 'Le pilote de la station d\'accueil était obsolète. Je l\'ai mis à jour à distance, pouvez-vous réessayer ?'],
                     ['user2', 'Ça fonctionne de nouveau, merci !'],
@@ -213,6 +252,8 @@ class DemoSeeder extends Seeder
                 'description' => "J'ai reçu un e-mail qui me demande de confirmer mes identifiants de messagerie via un lien. L'expéditeur m'est inconnu. Je n'ai pas cliqué.",
                 'requester' => 'user1', 'days_ago' => 6, 'status' => TicketStatus::Resolved,
                 'category' => 'messagerie', 'priority' => TicketPriority::High, 'technician' => 'tech2',
+                // The technician raised the priority proposed by the AI.
+                'ai' => ['messagerie', TicketPriority::Normal, 0.77],
                 'messages' => [
                     ['tech2', 'Expéditeur usurpé, même campagne que la semaine dernière. Domaine à bloquer sur le filtre.', true],
                     ['tech2', "Vous avez eu le bon réflexe. C'est bien une tentative d'hameçonnage : l'expéditeur est bloqué, vous pouvez supprimer le message."],
@@ -223,6 +264,7 @@ class DemoSeeder extends Seeder
                 'description' => "J'ai besoin de LibreOffice pour ouvrir les fichiers .odt envoyés par un fournisseur.",
                 'requester' => 'user4', 'days_ago' => 5, 'status' => TicketStatus::Resolved,
                 'category' => 'logiciel', 'priority' => TicketPriority::Low, 'technician' => 'tech1',
+                'ai' => ['logiciel', TicketPriority::Low, 0.97],
                 'messages' => [
                     ['tech1', 'LibreOffice est installé sur votre poste. Il apparaîtra dans le menu Démarrer après un redémarrage.'],
                 ],
@@ -232,6 +274,7 @@ class DemoSeeder extends Seeder
                 'description' => "Depuis 8 h 30, plus personne à la comptabilité n'accède au lecteur réseau P:. Nous ne pouvons plus travailler sur la clôture mensuelle.",
                 'requester' => 'user1', 'days_ago' => 1, 'status' => TicketStatus::InProgress,
                 'category' => 'reseau', 'priority' => TicketPriority::Critical, 'technician' => 'tech2',
+                'ai' => ['reseau', TicketPriority::Critical, 0.90],
                 'messages' => [
                     ['tech2', 'Le commutateur de l\'étage ne répond plus au ping. Je vais vérifier sur place.', true],
                     ['tech2', 'Nous avons identifié une panne sur un équipement réseau de votre étage. Intervention en cours.'],
@@ -243,6 +286,8 @@ class DemoSeeder extends Seeder
                 'description' => "En télétravail, le client VPN affiche « Échec de l'authentification » alors que mon mot de passe fonctionne au bureau.",
                 'requester' => 'user2', 'days_ago' => 2, 'status' => TicketStatus::InProgress,
                 'category' => 'reseau', 'priority' => TicketPriority::High, 'technician' => 'tech1',
+                // The technician rejected the suggestion and triaged by hand.
+                'ai' => ['acces-comptes', TicketPriority::High, 0.55], 'ai_rejected' => true,
                 'messages' => [
                     ['tech1', 'Bonjour, votre certificat VPN a expiré hier. Je vous en génère un nouveau.'],
                 ],
@@ -258,6 +303,7 @@ class DemoSeeder extends Seeder
                 'description' => 'Outlook affiche « Déconnecté » en bas de la fenêtre depuis ce matin. Je reçois pourtant mes e-mails sur mon téléphone.',
                 'requester' => 'user5', 'days_ago' => 2, 'status' => TicketStatus::WaitingUser,
                 'category' => 'messagerie', 'priority' => TicketPriority::Normal, 'technician' => 'tech2',
+                'ai' => ['messagerie', TicketPriority::Normal, 0.91],
                 'messages' => [
                     ['tech2', 'Bonjour, pouvez-vous me dire si le problème persiste après un redémarrage complet du poste ?'],
                 ],
@@ -267,6 +313,7 @@ class DemoSeeder extends Seeder
                 'description' => 'De retour de congés, je ne me souviens plus de mon mot de passe de session et mon compte est maintenant verrouillé.',
                 'requester' => 'user4', 'days_ago' => 1, 'status' => TicketStatus::Assigned,
                 'category' => 'acces-comptes', 'priority' => TicketPriority::High, 'technician' => 'tech1',
+                'ai' => ['acces-comptes', TicketPriority::High, 0.96],
             ],
             [
                 'title' => 'Excel se ferme tout seul à l\'ouverture d\'un gros fichier',
@@ -279,21 +326,26 @@ class DemoSeeder extends Seeder
                 'description' => "Je viens de rejoindre l'équipe commerciale et je n'ai pas accès au dossier partagé des contrats clients.",
                 'requester' => 'user2', 'days_ago' => 0, 'status' => TicketStatus::PendingValidation,
                 'category' => 'acces-comptes', 'priority' => TicketPriority::Normal,
+                'ai' => ['acces-comptes', TicketPriority::Normal, 0.89],
             ],
             [
                 'title' => 'Imprimante du 2e étage : bourrage papier permanent',
                 'description' => "L'imprimante du 2e étage affiche « Bourrage papier » même après avoir retiré toutes les feuilles.",
                 'requester' => 'user3', 'days_ago' => 0, 'status' => TicketStatus::PendingValidation,
+                'ai' => ['materiel', TicketPriority::Normal, 0.93],
             ],
             [
                 'title' => 'L\'imprimante du 2e étage ne répond plus',
                 'description' => "Impossible d'imprimer sur l'imprimante du deuxième étage : les documents restent bloqués dans la file d'attente.",
                 'requester' => 'user5', 'days_ago' => 0, 'status' => TicketStatus::PendingValidation,
+                'ai' => ['materiel', TicketPriority::Normal, 0.88],
             ],
             [
                 'title' => 'Wifi très lent dans la salle de réunion',
                 'description' => "Pendant les visioconférences en salle de réunion, l'image se fige et le son se coupe. Le problème n'existe pas dans les bureaux.",
                 'requester' => 'user4', 'days_ago' => 0, 'status' => TicketStatus::PendingValidation,
+                // Low confidence: network or hardware? The technician is warned.
+                'ai' => ['reseau', TicketPriority::Normal, 0.58],
             ],
         ];
     }
