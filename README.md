@@ -12,7 +12,7 @@ une priorité et une réponse ; **un technicien valide toujours avant toute acti
 | Phase | Contenu | État |
 |---|---|---|
 | 1 | Socle : authentification, rôles, tickets, machine à états, fil de discussion, notifications, CI | Terminée |
-| 2 | Tri par IA : classification, anonymisation, mode dégradé | À venir |
+| 2 | Tri par IA : classification, anonymisation, validation par le technicien, mode dégradé | Terminée |
 | 3 | Base de connaissances et réponses suggérées | À venir |
 | 4 | Évaluation de l'IA et tableau de bord | À venir |
 | 5 | API REST et application mobile du technicien | À venir |
@@ -105,6 +105,42 @@ Le seeder crée aussi 15 tickets, dans tous les statuts, avec leurs messages et 
 | `MAIL_MAILER` | Envoi des e-mails. `log` les écrit dans `storage/logs/laravel.log` | `log` |
 | `MAIL_FROM_ADDRESS` | Expéditeur des e-mails | `support@triage.test` |
 
+## Tri par IA
+
+L'IA est **désactivée par défaut** : l'application fonctionne sans elle, en tri manuel. Pour
+l'activer, renseignez dans `.env` :
+
+```dotenv
+AI_ENABLED=true
+AI_PROVIDER=anthropic
+ANTHROPIC_API_KEY=votre-clé
+```
+
+| Variable | Rôle | Valeur par défaut |
+|---|---|---|
+| `AI_ENABLED` | Active le tri par IA | `false` |
+| `AI_PROVIDER` | Fournisseur : `anthropic`. La valeur `fake` est réservée aux tests | `anthropic` |
+| `ANTHROPIC_API_KEY` | Clé de l'API Claude. Ne la commitez jamais | vide |
+| `ANTHROPIC_MODEL` | Modèle Claude utilisé | `claude-opus-5-5` |
+| `ANTHROPIC_EFFORT` | Profondeur de raisonnement (`low`, `medium`, `high`) | `low` |
+| `ANTHROPIC_REFUSAL_FALLBACK` | Si le modèle refuse une requête, l'API la rejoue sur un modèle de repli. À passer à `false` avec un modèle Haiku | `true` |
+| `AI_TIMEOUT` | Délai maximal d'une réponse, en secondes | `30` |
+| `AI_RATE_LIMIT_PER_MINUTE` | Nombre maximal d'appels à l'IA par minute | `20` |
+| `AI_LOW_CONFIDENCE_THRESHOLD` | Seuil du badge « Confiance faible » | `0.7` |
+
+Ce qui est garanti, IA activée ou non :
+
+- Les données personnelles (e-mails, téléphones, noms, adresses IP, mots de passe) sont
+  remplacées par des jetons **avant** l'envoi.
+- L'IA ne modifie jamais un ticket : elle propose, un technicien accepte, corrige ou rejette.
+- Si l'IA est en panne ou trop lente, le ticket part en tri manuel et rien n'est bloqué.
+- Le journal `ai_logs` ne contient que des chiffres (jetons, durée, coût), jamais de texte.
+
+Les données de démonstration contiennent des suggestions dans tous les états (en attente,
+acceptée, modifiée, rejetée) sans qu'aucun appel à une IA soit nécessaire.
+
+![Suggestion de l'IA](docs/captures/suggestion-ia.png)
+
 ## File d'attente
 
 Les notifications (et, à partir de la phase 2, les appels à l'IA) passent par une file
@@ -115,6 +151,14 @@ php artisan queue:work
 ```
 
 Sans ce processus, l'application fonctionne mais les notifications restent en attente.
+
+Le planificateur de Laravel envoie en tri manuel les tickets que l'IA n'a pas traités à temps
+(par exemple si le worker est arrêté). En production, une seule ligne de cron suffit ; en
+développement, lancez-le à la main :
+
+```bash
+php artisan schedule:work
+```
 
 En développement, `composer dev` lance en une commande le serveur, la file d'attente et Vite.
 
@@ -136,6 +180,10 @@ La CI GitHub Actions exécute les mêmes contrôles à chaque pull request : tes
 |---|---|
 | `app/Enums` | Rôles, statuts, priorités. La machine à états est dans `TicketStatus` |
 | `app/Services/Tickets` | `TicketWorkflow` (seul point d'entrée pour modifier un ticket) et `TicketNotifier` |
+| `app/Services/Ai` | `AiProvider` et ses fournisseurs, `TicketClassifier`, `SuggestionReviewer`, journal des appels |
+| `app/Services/Privacy` | `PiiMasker` : anonymisation avant envoi à l'IA |
+| `app/Jobs` | `ClassifyTicket` : la classification en file d'attente |
+| `resources/prompts` | Les prompts envoyés à l'IA |
 | `app/Actions` | Opérations partagées entre le web et la future API (créer un ticket, publier un message) |
 | `app/Policies` | Règles d'accès à un ticket |
 | `app/Livewire` | File du technicien et fil de discussion |

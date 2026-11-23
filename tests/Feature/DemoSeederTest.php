@@ -2,10 +2,13 @@
 
 use App\Enums\TicketStatus;
 use App\Enums\UserRole;
+use App\Models\AiLog;
+use App\Models\AiSuggestion;
 use App\Models\Category;
 use App\Models\Ticket;
 use App\Models\TicketEvent;
 use App\Models\User;
+use App\Services\Ai\AiProvider;
 use Database\Seeders\ReferenceDataSeeder;
 
 test('the reference data contains the six categories', function () {
@@ -45,6 +48,20 @@ test('seeded tickets have a consistent history', function () {
             ->and($ticket->created_at->lessThan($ticket->closed_at))->toBeTrue()
             ->and($ticket->events()->count())->toBeGreaterThanOrEqual(8);
     }
+});
+
+test('the demo data shows AI suggestions in every state without calling any AI', function () {
+    config(['ai.enabled' => true]);
+
+    $this->seed();
+
+    $byStatus = AiSuggestion::query()->get()->countBy(fn (AiSuggestion $suggestion) => $suggestion->status->value);
+
+    expect($byStatus->all())->toEqualCanonicalizing(['pending' => 3, 'accepted' => 7, 'modified' => 2, 'rejected' => 1])
+        ->and(AiLog::count())->toBe(0)
+        ->and(app(AiProvider::class)->calls)->toBe([])
+        // One pending suggestion is below the confidence threshold, to show the warning badge.
+        ->and(AiSuggestion::query()->where('status', 'pending')->get()->filter->hasLowConfidence())->toHaveCount(1);
 });
 
 test('seeded dates are recent and never in the future', function () {

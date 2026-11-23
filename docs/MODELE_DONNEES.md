@@ -138,12 +138,94 @@ flowchart LR
     A --> A3(Consulter tous les tickets)
 ```
 
-## 5. Tables prévues pour les phases suivantes
+## 5. Tables de la phase 2 (tri par IA)
+
+```mermaid
+erDiagram
+    TICKET ||--o{ AI_SUGGESTION : "reçoit"
+    CATEGORY |o--o{ AI_SUGGESTION : "est proposée par"
+    USER |o--o{ AI_SUGGESTION : "valide"
+    TICKET |o--o{ AI_LOG : "concerne"
+
+    AI_SUGGESTION {
+        int id PK
+        string priority
+        decimal confidence
+        string status
+        datetime reviewed_at
+    }
+    AI_LOG {
+        int id PK
+        string purpose
+        string provider
+        string model
+        int input_tokens
+        int output_tokens
+        int duration_ms
+        decimal estimated_cost_usd
+        boolean success
+        string error_code
+        datetime created_at
+    }
+```
+
+- **ai_suggestions** (id PK, #ticket_id, #category_id, priority, confidence, status,
+  #reviewed_by, reviewed_at, created_at, updated_at)
+- **ai_logs** (id PK, #ticket_id, purpose, provider, model, input_tokens, output_tokens,
+  duration_ms, estimated_cost_usd, success, error_code, created_at)
+- **tickets** reçoit la colonne `triage_mode` (`ai` ou `manual`).
+
+Une suggestion garde ce que l'IA a proposé, même si le technicien choisit autre chose : c'est ce
+qui permettra de mesurer le taux de suggestions acceptées, modifiées et rejetées.
+
+`ai_logs` n'a aucune colonne de type texte : il est impossible d'y écrire un prompt ou une réponse.
+
+## 6. Flux du tri par IA
+
+```mermaid
+sequenceDiagram
+    actor U as Utilisateur
+    participant App as Application (requête HTTP)
+    participant Q as File d'attente
+    participant J as Job ClassifyTicket
+    participant M as PiiMasker
+    participant IA as Fournisseur d'IA
+    actor T as Technicien
+
+    U->>App: Crée un ticket
+    App->>Q: Met le Job en file
+    App-->>U: « Ticket enregistré » (sans attendre l'IA)
+
+    Q->>J: Un worker exécute le Job
+    J->>M: Masque les données personnelles
+    M-->>J: Texte avec jetons [NOM_1], [EMAIL_1]...
+    J->>IA: Prompt système + ticket entre balises + schéma JSON
+
+    alt Réponse valide
+        IA-->>J: catégorie, priorité, confiance
+        J->>J: Valide contre les catégories existantes
+        J->>App: Crée une suggestion « en attente »
+    else Réponse inutilisable
+        IA-->>J: JSON invalide
+        J->>IA: Une nouvelle tentative
+        Note over J: Deuxième échec : tri manuel
+    else Panne, délai dépassé, quota, refus
+        IA--xJ: Erreur
+        Note over J: Mode dégradé : tri manuel
+    end
+
+    J->>App: Ticket « en attente de validation » + ligne dans ai_logs
+
+    T->>App: Ouvre le ticket
+    App-->>T: Suggestion et score de confiance
+    T->>App: Accepte, modifie ou rejette
+    Note over App: Le ticket n'est modifié qu'ici, par le technicien
+```
+
+## 7. Tables prévues pour les phases suivantes
 
 | Table | Phase | Rôle |
 |---|---|---|
-| `ai_suggestions` | 2 | Proposition de l'IA pour un ticket et décision du technicien |
-| `ai_logs` | 2 | Journal technique des appels à l'IA, sans contenu |
 | `kb_articles` | 3 | Articles de la base de connaissances |
 | `ai_suggestion_kb_article` | 3 | Articles cités par une suggestion (table de liaison) |
 

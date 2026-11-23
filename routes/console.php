@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Foundation\Inspiring;
-use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schedule;
 
-Artisan::command('inspire', function () {
-    $this->comment(Inspiring::quote());
-})->purpose('Display an inspiring quote');
+// Scheduled tasks. In production, one cron entry runs "php artisan schedule:run" every minute.
+
+// No ticket stays "new" for ever if the AI or the queue worker is down.
+Schedule::command('triage:release-stuck')->everyFiveMinutes();

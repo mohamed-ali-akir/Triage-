@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\AiSuggestionController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
@@ -22,6 +23,8 @@ Route::middleware('auth')->group(function () {
     Route::patch('/tickets/{ticket}/status', [TicketStatusController::class, 'update'])->name('tickets.status.update');
     Route::patch('/tickets/{ticket}/triage', [TicketTriageController::class, 'update'])->name('tickets.triage.update');
     Route::patch('/tickets/{ticket}/assign', [TicketAssignmentController::class, 'update'])->name('tickets.assign.update');
+    Route::post('/tickets/{ticket}/suggestion/accept', [AiSuggestionController::class, 'accept'])->name('tickets.suggestion.accept');
+    Route::post('/tickets/{ticket}/suggestion/reject', [AiSuggestionController::class, 'reject'])->name('tickets.suggestion.reject');
 
     // The technician queue is a Livewire component embedded in a plain Blade view.
     Route::view('/queue', 'queue.index')->middleware('can:view-queue')->name('queue.index');
