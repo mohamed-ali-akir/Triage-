@@ -1,0 +1,426 @@
+{
+    "description": "Jeu d'évaluation du tri par IA : 60 tickets réalistes, étiquetés à la main (catégorie et priorité attendues).",
+    "labelled_by": "À relire et valider par l'étudiant avant l'oral : une étiquette discutable se corrige ici.",
+    "tickets": [
+        {
+            "id": 1,
+            "title": "Écran qui clignote",
+            "description": "Depuis hier mon écran clignote toutes les dix secondes. C'est fatigant pour les yeux mais j'arrive encore à travailler.",
+            "expected_category": "materiel",
+            "expected_priority": "normal"
+        },
+        {
+            "id": 2,
+            "title": "PC portable ne s'allume plus",
+            "description": "Mon portable ne démarre plus du tout ce matin, aucun voyant ne s'allume même branché sur secteur. Je n'ai pas d'autre poste et j'ai une présentation client à 14 h. Vous pouvez me joindre au 06 45 12 78 90.",
+            "expected_category": "materiel",
+            "expected_priority": "high"
+        },
+        {
+            "id": 3,
+            "title": "Touche Entrée du clavier capricieuse",
+            "description": "La touche Entrée de mon clavier reste enfoncée une fois sur deux. Je me débrouille avec celle du pavé numérique, rien de pressé.",
+            "expected_category": "materiel",
+            "expected_priority": "low"
+        },
+        {
+            "id": 4,
+            "title": "Imprimante de l'accueil : traces noires",
+            "description": "Toutes les pages imprimées à l'accueil sortent avec une bande noire sur le côté gauche. Les documents restent lisibles mais ce n'est pas présentable pour les visiteurs.",
+            "expected_category": "materiel",
+            "expected_priority": "normal"
+        },
+        {
+            "id": 5,
+            "title": "Demande d'un second écran",
+            "description": "Serait-il possible d'avoir un deuxième écran sur mon poste ? Je travaille toute la journée avec deux tableaux ouverts en même temps.",
+            "expected_category": "materiel",
+            "expected_priority": "low"
+        },
+        {
+            "id": 6,
+            "title": "Souris sans fil qui ne répond plus",
+            "description": "Ma souris sans fil ne répond plus, même avec des piles neuves. J'utilise le pavé tactile du portable en attendant.",
+            "expected_category": "materiel",
+            "expected_priority": "low"
+        },
+        {
+            "id": 7,
+            "title": "Onduleur de la salle serveur en alarme",
+            "description": "L'onduleur de la salle serveur bipe en continu et affiche « batterie défaillante ». S'il y a une coupure de courant, tous les serveurs s'arrêteront d'un coup.",
+            "expected_category": "materiel",
+            "expected_priority": "critical"
+        },
+        {
+            "id": 8,
+            "title": "Vidéoprojecteur de la salle B en panne",
+            "description": "Le vidéoprojecteur de la salle de réunion B ne s'allume plus, le voyant reste rouge. Le comité de direction s'y réunit demain à 9 h avec des intervenants extérieurs.",
+            "expected_category": "materiel",
+            "expected_priority": "high"
+        },
+        {
+            "id": 9,
+            "title": "Batterie du portable qui tient 20 minutes",
+            "description": "La batterie de mon ordinateur portable se vide en vingt minutes. Au bureau je reste branché, mais en déplacement chez les clients c'est gênant.",
+            "expected_category": "materiel",
+            "expected_priority": "normal"
+        },
+        {
+            "id": 10,
+            "title": "Douchette code-barres de l'expédition HS",
+            "description": "La douchette du poste d'expédition ne lit plus aucun code-barres depuis ce matin. Toute l'équipe saisit les colis à la main et nous prenons du retard sur les départs des transporteurs.",
+            "expected_category": "materiel",
+            "expected_priority": "high"
+        },
+        {
+            "id": 11,
+            "title": "Plus d'Internet dans tout le bâtiment B",
+            "description": "Plus aucun poste du bâtiment B n'a accès à Internet ni aux serveurs depuis 9 h 15. La passerelle 192.168.20.1 ne répond plus au ping. Une quarantaine de personnes sont à l'arrêt.",
+            "expected_category": "reseau",
+            "expected_priority": "critical"
+        },
+        {
+            "id": 12,
+            "title": "Le wifi Invités ne fonctionne pas",
+            "description": "Un client en visite n'arrive pas à se connecter au wifi Invités : le portail de connexion ne s'affiche pas. Nous lui avons prêté un câble en attendant.",
+            "expected_category": "reseau",
+            "expected_priority": "normal"
+        },
+        {
+            "id": 13,
+            "title": "VPN qui se déconnecte régulièrement",
+            "description": "En télétravail, le VPN se coupe toutes les dix minutes environ. Je me reconnecte à chaque fois, mais c'est pénible et je perds parfois ma saisie en cours.",
+            "expected_category": "reseau",
+            "expected_priority": "normal"
+        },
+        {
+            "id": 14,
+            "title": "Lecteur P: inaccessible pour toute la comptabilité",
+            "description": "Depuis 8 h 30, plus personne à la comptabilité n'accède au lecteur réseau P:. Nous ne pouvons plus ouvrir aucun dossier et la clôture mensuelle est en cours.",
+            "expected_category": "reseau",
+            "expected_priority": "critical"
+        },
+        {
+            "id": 15,
+            "title": "Prise réseau murale morte au bureau 214",
+            "description": "La prise réseau murale du bureau 214 ne donne plus de connexion, le voyant du câble reste éteint. Je suis passé en wifi en attendant.",
+            "expected_category": "reseau",
+            "expected_priority": "normal"
+        },
+        {
+            "id": 16,
+            "title": "Connexion très lente tous les matins",
+            "description": "Entre 9 h et 10 h, l'accès aux sites web et au lecteur réseau est très lent sur mon poste. Le reste de la journée tout est normal.",
+            "expected_category": "reseau",
+            "expected_priority": "normal"
+        },
+        {
+            "id": 17,
+            "title": "L'agence de Lyon n'accède plus au siège",
+            "description": "Les six personnes de l'agence de Lyon n'ont plus accès au serveur de fichiers ni à l'ERP du siège depuis ce matin. Internet fonctionne, mais plus rien vers le siège.",
+            "expected_category": "reseau",
+            "expected_priority": "critical"
+        },
+        {
+            "id": 18,
+            "title": "Ouverture d'un accès pour un prestataire",
+            "description": "Notre prestataire de maintenance de la climatisation aura besoin d'un accès distant à son automate le mois prochain. Pouvez-vous prévoir l'ouverture nécessaire ?",
+            "expected_category": "reseau",
+            "expected_priority": "low"
+        },
+        {
+            "id": 19,
+            "title": "Plus aucun appel entrant au standard",
+            "description": "Les téléphones IP de l'accueil n'ont plus de tonalité et le standard ne reçoit plus aucun appel externe depuis 8 h 30. Les clients tombent sur un message d'erreur.",
+            "expected_category": "reseau",
+            "expected_priority": "critical"
+        },
+        {
+            "id": 20,
+            "title": "Visioconférences saccadées en salle A",
+            "description": "En salle A, l'image se fige et le son se coupe pendant les visioconférences. Dans les bureaux voisins la connexion est correcte.",
+            "expected_category": "reseau",
+            "expected_priority": "normal"
+        },
+        {
+            "id": 21,
+            "title": "Mot de passe oublié, compte verrouillé",
+            "description": "J'ai oublié mon mot de passe Windows et après plusieurs essais mon compte est verrouillé. Mon identifiant est jdupont, je crois que mon mot de passe était Soleil2024. Je ne peux plus ouvrir ma session.",
+            "expected_category": "acces-comptes",
+            "expected_priority": "high"
+        },
+        {
+            "id": 22,
+            "title": "Compte pour un stagiaire qui arrive lundi",
+            "description": "Un stagiaire, Lucas Fontaine, rejoint le service marketing lundi prochain pour trois mois. Il lui faudra un compte Windows et une adresse e-mail.",
+            "expected_category": "acces-comptes",
+            "expected_priority": "normal"
+        },
+        {
+            "id": 23,
+            "title": "Accès refusé au dossier RH",
+            "description": "Je viens de rejoindre le service RH et l'accès au dossier partagé « Paie » m'est refusé. J'en ai besoin pour préparer la paie qui part vendredi.",
+            "expected_category": "acces-comptes",
+            "expected_priority": "high"
+        },
+        {
+            "id": 24,
+            "title": "Désactiver le compte d'un salarié parti",
+            "description": "Un collègue du service commercial a quitté l'entreprise vendredi dernier. Merci de désactiver son compte et de rediriger sa messagerie vers son responsable.",
+            "expected_category": "acces-comptes",
+            "expected_priority": "normal"
+        },
+        {
+            "id": 25,
+            "title": "Je pense que mon compte a été piraté",
+            "description": "Des e-mails que je n'ai pas écrits partent de mon adresse depuis ce matin et mon mot de passe ne fonctionne plus. Plusieurs collègues ont reçu un lien bizarre de ma part.",
+            "expected_category": "acces-comptes",
+            "expected_priority": "critical"
+        },
+        {
+            "id": 26,
+            "title": "Demande de droits administrateur",
+            "description": "Je voudrais les droits administrateur sur mon poste pour installer moi-même mes outils sans vous déranger à chaque fois.",
+            "expected_category": "acces-comptes",
+            "expected_priority": "low"
+        },
+        {
+            "id": 27,
+            "title": "Nouveau téléphone : plus de codes de double authentification",
+            "description": "J'ai changé de téléphone et je n'ai plus l'application qui donne les codes. Je ne peux plus me connecter au VPN ni au webmail, donc je ne peux pas travailler depuis chez moi.",
+            "expected_category": "acces-comptes",
+            "expected_priority": "high"
+        },
+        {
+            "id": 28,
+            "title": "Accès au logiciel de paie pour ma remplaçante",
+            "description": "Je pars en congé maternité dans trois semaines. Ma remplaçante aura besoin des mêmes accès que moi au logiciel de paie.",
+            "expected_category": "acces-comptes",
+            "expected_priority": "normal"
+        },
+        {
+            "id": 29,
+            "title": "Mot de passe expiré pendant mes congés",
+            "description": "De retour de congés, Windows m'indique que mon mot de passe a expiré et refuse d'ouvrir ma session. Je suis bloqué devant l'écran de connexion.",
+            "expected_category": "acces-comptes",
+            "expected_priority": "high"
+        },
+        {
+            "id": 30,
+            "title": "Changement de nom sur mon compte",
+            "description": "Je me suis mariée cet été. Pourriez-vous mettre à jour mon nom sur mon compte et mon adresse e-mail quand vous aurez un moment ?",
+            "expected_category": "acces-comptes",
+            "expected_priority": "low"
+        },
+        {
+            "id": 31,
+            "title": "Excel plante à l'ouverture d'un classeur",
+            "description": "Excel se ferme tout seul dès que j'ouvre le classeur du budget prévisionnel. Les autres fichiers s'ouvrent normalement et j'ai une copie de la semaine dernière.",
+            "expected_category": "logiciel",
+            "expected_priority": "normal"
+        },
+        {
+            "id": 32,
+            "title": "URGENT !!! Installation de Photoshop",
+            "description": "URGENT URGENT !!! J'AI BESOIN DE PHOTOSHOP SUR MON POSTE. C'est pour retoucher les photos du repas de fin d'année du service.",
+            "expected_category": "logiciel",
+            "expected_priority": "low"
+        },
+        {
+            "id": 33,
+            "title": "Le logiciel de comptabilité refuse de démarrer sur tous les postes",
+            "description": "Depuis ce matin le logiciel de comptabilité affiche « licence expirée » sur les cinq postes du service. Nous ne pouvons plus saisir aucune écriture ni éditer de facture.",
+            "expected_category": "logiciel",
+            "expected_priority": "critical"
+        },
+        {
+            "id": 34,
+            "title": "Mise à jour Windows bloquée à 30 %",
+            "description": "Mon poste affiche « Mise à jour en cours, 30 % » depuis plus de deux heures. Je n'ose pas l'éteindre et je ne peux rien faire d'autre.",
+            "expected_category": "logiciel",
+            "expected_priority": "high"
+        },
+        {
+            "id": 35,
+            "title": "Le correcteur orthographique de Word a disparu",
+            "description": "Dans Word, les fautes ne sont plus soulignées en rouge depuis quelques jours. Ce n'est pas bloquant, je relis à la main.",
+            "expected_category": "logiciel",
+            "expected_priority": "low"
+        },
+        {
+            "id": 36,
+            "title": "ERP très lent pour tout l'atelier",
+            "description": "Depuis la mise à jour de lundi, chaque écran de l'ERP met trente secondes à s'afficher sur tous les postes de l'atelier. La saisie des ordres de fabrication prend un retard important.",
+            "expected_category": "logiciel",
+            "expected_priority": "high"
+        },
+        {
+            "id": 37,
+            "title": "L'antivirus a détecté un cheval de Troie",
+            "description": "Après avoir ouvert une pièce jointe, mon antivirus a affiché « Cheval de Troie détecté » puis la fenêtre a disparu. Depuis, le poste est très lent et des fenêtres s'ouvrent toutes seules.",
+            "expected_category": "logiciel",
+            "expected_priority": "critical"
+        },
+        {
+            "id": 38,
+            "title": "Teams ne démarre plus",
+            "description": "L'application Teams reste sur un écran blanc au démarrage. J'utilise la version web en attendant, mais je n'ai plus les notifications.",
+            "expected_category": "logiciel",
+            "expected_priority": "normal"
+        },
+        {
+            "id": 39,
+            "title": "Besoin d'un outil pour signer des PDF",
+            "description": "Auriez-vous un logiciel à me conseiller pour signer électroniquement des documents PDF ? Aujourd'hui je les imprime puis je les scanne.",
+            "expected_category": "logiciel",
+            "expected_priority": "low"
+        },
+        {
+            "id": 40,
+            "title": "Le logiciel de CAO se ferme au lancement",
+            "description": "Le logiciel de CAO se ferme dès le lancement depuis ce matin, avec un message d'erreur. Je dois rendre un plan à un client ce soir et je ne peux pas l'ouvrir.",
+            "expected_category": "logiciel",
+            "expected_priority": "high"
+        },
+        {
+            "id": 41,
+            "title": "Outlook ne reçoit plus les nouveaux messages",
+            "description": "Outlook n'affiche plus les nouveaux e-mails depuis hier soir, alors que l'envoi fonctionne. Je les vois bien dans le webmail.",
+            "expected_category": "messagerie",
+            "expected_priority": "normal"
+        },
+        {
+            "id": 42,
+            "title": "Boîte aux lettres pleine",
+            "description": "Je reçois un message « quota dépassé » et je ne peux plus envoyer d'e-mails. J'ai commencé à supprimer d'anciens messages mais ce n'est pas suffisant.",
+            "expected_category": "messagerie",
+            "expected_priority": "normal"
+        },
+        {
+            "id": 43,
+            "title": "E-mail suspect qui demande mes identifiants",
+            "description": "J'ai reçu un e-mail de « support-informatique@micros0ft-securite.com » qui me demande de confirmer mon mot de passe via un lien. Je n'ai pas cliqué. Plusieurs collègues l'ont reçu aussi.",
+            "expected_category": "messagerie",
+            "expected_priority": "high"
+        },
+        {
+            "id": 44,
+            "title": "J'ai saisi mon mot de passe sur un faux site",
+            "description": "J'ai cliqué sur le lien d'un e-mail qui semblait venir de la direction et j'ai saisi mon identifiant et mon mot de passe. Je réalise maintenant que le site était faux.",
+            "expected_category": "messagerie",
+            "expected_priority": "critical"
+        },
+        {
+            "id": 45,
+            "title": "Création d'une adresse partagée contact@",
+            "description": "Le service commercial souhaiterait une adresse partagée contact@ consultable par trois personnes. Rien d'urgent, pour le mois prochain.",
+            "expected_category": "messagerie",
+            "expected_priority": "low"
+        },
+        {
+            "id": 46,
+            "title": "Nos e-mails vers un client sont rejetés",
+            "description": "Tous nos e-mails vers le domaine d'un client important reviennent avec le message « blocked » depuis ce matin. Un devis doit absolument lui parvenir aujourd'hui.",
+            "expected_category": "messagerie",
+            "expected_priority": "high"
+        },
+        {
+            "id": 47,
+            "title": "Mettre à jour ma signature",
+            "description": "Mon intitulé de poste a changé. Pouvez-vous m'indiquer comment modifier ma signature dans Outlook, ou le faire pour moi ?",
+            "expected_category": "messagerie",
+            "expected_priority": "low"
+        },
+        {
+            "id": 48,
+            "title": "Plus aucun e-mail pour toute l'entreprise",
+            "description": "Plus personne dans l'entreprise ne peut envoyer ni recevoir d'e-mails depuis environ 10 h. Outlook affiche « Déconnecté » sur tous les postes.",
+            "expected_category": "messagerie",
+            "expected_priority": "critical"
+        },
+        {
+            "id": 49,
+            "title": "Calendrier partagé invisible",
+            "description": "Je ne vois plus le calendrier partagé de mon équipe dans Outlook depuis lundi. Mes collègues le voient toujours.",
+            "expected_category": "messagerie",
+            "expected_priority": "normal"
+        },
+        {
+            "id": 50,
+            "title": "Message d'absence pour une collègue en arrêt",
+            "description": "Sophie Marchand est en arrêt maladie pour deux semaines et n'a pas pu activer son message d'absence. Pouvez-vous le mettre en place et rediriger ses e-mails vers moi (c.petit@exemple.fr) ?",
+            "expected_category": "messagerie",
+            "expected_priority": "normal"
+        },
+        {
+            "id": 51,
+            "title": "Question sur la charte informatique",
+            "description": "Ai-je le droit d'utiliser ma clé USB personnelle sur mon poste de travail ? Je n'ai pas trouvé la réponse dans la charte informatique.",
+            "expected_category": "autre",
+            "expected_priority": "low"
+        },
+        {
+            "id": 52,
+            "title": "Demande de formation Excel",
+            "description": "Je souhaiterais suivre une formation sur les tableaux croisés dynamiques. Savez-vous si quelque chose est prévu cette année ?",
+            "expected_category": "autre",
+            "expected_priority": "low"
+        },
+        {
+            "id": 53,
+            "title": "Commande d'un téléphone portable professionnel",
+            "description": "Je prends un poste de commercial itinérant le mois prochain. Il me faudra un téléphone portable professionnel avec un forfait.",
+            "expected_category": "autre",
+            "expected_priority": "low"
+        },
+        {
+            "id": 54,
+            "title": "Mon badge n'ouvre plus la porte d'entrée",
+            "description": "Mon badge n'ouvre plus la porte d'entrée depuis ce matin. Je dois sonner à l'accueil à chaque fois pour qu'on m'ouvre.",
+            "expected_category": "autre",
+            "expected_priority": "normal"
+        },
+        {
+            "id": 55,
+            "title": "Déménagement de quatre postes vendredi",
+            "description": "Le service achats change de bureau vendredi. Il faudra déplacer et rebrancher quatre postes complets, avec leurs écrans et leurs téléphones.",
+            "expected_category": "autre",
+            "expected_priority": "normal"
+        },
+        {
+            "id": 56,
+            "title": "Où trouver le modèle de note de frais ?",
+            "description": "Je ne retrouve plus le modèle de note de frais sur l'intranet. Pouvez-vous m'indiquer où il se trouve ?",
+            "expected_category": "autre",
+            "expected_priority": "low"
+        },
+        {
+            "id": 57,
+            "title": "Fuite d'eau dans la salle serveur",
+            "description": "De l'eau goutte du plafond de la salle serveur, juste au-dessus d'une baie. Nous avons mis une bâche mais l'eau continue de tomber.",
+            "expected_category": "autre",
+            "expected_priority": "critical"
+        },
+        {
+            "id": 58,
+            "title": "Climatisation de la salle serveur en panne",
+            "description": "La climatisation de la salle serveur ne tourne plus et la température est montée à 34 °C. Elle continue de grimper.",
+            "expected_category": "autre",
+            "expected_priority": "critical"
+        },
+        {
+            "id": 59,
+            "title": "Devis pour trois ordinateurs portables",
+            "description": "Nous prévoyons trois recrutements au second semestre. Pouvez-vous nous transmettre un devis pour trois ordinateurs portables standards ?",
+            "expected_category": "autre",
+            "expected_priority": "low"
+        },
+        {
+            "id": 60,
+            "title": "Récupérer un dossier supprimé par erreur",
+            "description": "J'ai supprimé par erreur hier le dossier « Budget 2027 » du lecteur P:. J'en ai besoin pour la réunion de demain matin, est-il possible de le restaurer ?",
+            "expected_category": "autre",
+            "expected_priority": "high"
+        }
+    ]
+}
