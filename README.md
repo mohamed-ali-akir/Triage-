@@ -119,7 +119,7 @@ ANTHROPIC_API_KEY=votre-clé
 | Variable | Rôle | Valeur par défaut |
 |---|---|---|
 | `AI_ENABLED` | Active le tri par IA | `false` |
-| `AI_PROVIDER` | Fournisseur : `anthropic` (ou `fake` pour une démonstration sans clé) | `anthropic` |
+| `AI_PROVIDER` | Fournisseur : `anthropic`. La valeur `fake` est réservée aux tests | `anthropic` |
 | `ANTHROPIC_API_KEY` | Clé de l'API Claude. Ne la commitez jamais | vide |
 | `ANTHROPIC_MODEL` | Modèle Claude utilisé | `claude-opus-5-5` |
 | `ANTHROPIC_EFFORT` | Profondeur de raisonnement (`low`, `medium`, `high`) | `low` |
