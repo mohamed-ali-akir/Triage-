@@ -24,6 +24,7 @@ une priorité et une réponse ; **un technicien valide toujours avant toute acti
 - [Modèle de données et diagrammes](docs/MODELE_DONNEES.md)
 - [Journal des décisions techniques](docs/DECISIONS.md)
 - [Protection des données personnelles (RGPD)](docs/RGPD.md)
+- [Sécurité : audit, corrections et limites](docs/SECURITE.md)
 - [API REST de l'application mobile](docs/API.md)
 - [Application Android du technicien](mobile/README.md)
 - [Évaluations du tri par IA](docs/evaluations/README.md)
@@ -211,11 +212,33 @@ l'API REST décrite dans [docs/API.md](docs/API.md). Installation et lancement :
 ## Données personnelles
 
 ```bash
-php artisan triage:purge-old-tickets --dry-run        # tickets clos depuis plus de 24 mois
+php artisan triage:purge-old-tickets --dry-run        # tickets clos ou résolus depuis plus de 24 mois
 php artisan triage:anonymize-user adresse@exemple.fr  # droit à l'effacement
 ```
 
 La purge est planifiée chaque nuit. Tout est décrit dans [docs/RGPD.md](docs/RGPD.md).
+
+## Sécurité et mise en production
+
+```bash
+php artisan triage:check-deployment   # échoue tant que la configuration n'est pas sûre
+```
+
+La commande vérifie le mode débogage, HTTPS, le cookie de session, le compte de la base de
+données, les comptes de démonstration et la double authentification du support. L'audit de
+sécurité, les corrections et les limites connues sont dans [docs/SECURITE.md](docs/SECURITE.md).
+
+| Variable | Rôle | Valeur par défaut |
+|---|---|---|
+| `REQUIRE_2FA_FOR_STAFF` | Impose la double authentification aux techniciens et aux administrateurs | `false` |
+| `TRUSTED_PROXIES` | Adresse du proxy placé devant l'application, pour lire la vraie adresse du visiteur | vide |
+| `LIMIT_TICKETS_PER_HOUR` | Tickets qu'un compte peut créer par heure | `20` |
+| `LIMIT_MESSAGES_PER_MINUTE` | Messages qu'un compte peut envoyer par minute | `10` |
+| `LIMIT_API_REQUESTS_PER_MINUTE` | Appels de l'API mobile par minute et par compte | `120` |
+| `OLLAMA_ALLOW_INSECURE` | Accepte Ollama en HTTP sur une autre machine | `false` |
+
+Un compte créé par un administrateur reçoit un mot de passe provisoire : il doit le remplacer à
+sa première connexion. Le journal de sécurité est écrit dans `storage/logs/audit-*.log`.
 
 ## File d'attente
 

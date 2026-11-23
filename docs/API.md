@@ -18,8 +18,8 @@ Authorization: Bearer 12|k3Jd...
 ```
 
 Le mot de passe n'est jamais stocké sur le téléphone : seul le jeton l'est. Un jeton expire au
-bout de 30 jours (`SANCTUM_TOKEN_EXPIRATION`), est révoqué à la déconnexion, et tous les jetons
-d'un compte sont révoqués quand l'administrateur le désactive.
+bout de 7 jours (`SANCTUM_TOKEN_EXPIRATION`) et est révoqué à la déconnexion. Tous les jetons d'un
+compte sont révoqués quand son mot de passe ou son rôle change, ou quand il est désactivé.
 
 ## Résumé des routes
 
@@ -33,11 +33,13 @@ d'un compte sont révoqués quand l'administrateur le désactive.
 | PATCH | `/tickets/{id}/status` | Changer le statut |
 | POST | `/tickets/{id}/messages` | Répondre ou écrire une note interne |
 
-Toutes les routes sauf `/login` exigent un jeton.
+Toutes les routes sauf `/login` exigent un jeton. Elles sont limitées à 120 appels par minute et par compte
+(code 429 au-delà).
 
 ## POST /login
 
-Limitée à 5 tentatives par minute et par adresse IP.
+Limitée à 5 tentatives par minute pour une adresse e-mail depuis une adresse IP, et à 20 tentatives
+par quart d'heure pour une adresse e-mail quelle que soit l'adresse IP. Au-delà : code 429.
 
 | Champ | Obligatoire | Description |
 |---|---|---|
@@ -66,7 +68,7 @@ Réponse `200` :
 |---|---|
 | 422 | Identifiants refusés. Le message est le même pour une adresse inconnue, un mauvais mot de passe et un compte désactivé, pour ne pas révéler quels comptes existent. |
 | 422 | Code de double authentification manquant ou invalide (champ `code`). |
-| 403 | Le compte n'est pas un technicien. |
+| 403 | Le compte n'est pas un technicien, ou il doit d'abord se sécuriser sur le site (mot de passe provisoire à remplacer, double authentification à activer). |
 | 429 | Trop de tentatives. |
 
 ## POST /logout
@@ -157,7 +159,8 @@ Réponse `200` :
 }
 ```
 
-Un technicien peut lire le ticket d'un collègue, mais `allowed_statuses` est alors vide.
+L'application mobile n'ouvre que les tickets assignés à son technicien : le ticket d'un collègue
+ou un ticket non assigné renvoie une erreur 403, pour qu'un téléphone perdu n'ouvre pas toute la file.
 
 | Code | Cas |
 |---|---|

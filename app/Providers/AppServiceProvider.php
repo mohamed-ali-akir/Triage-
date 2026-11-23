@@ -8,7 +8,6 @@ use App\Services\Kb\KbSearch;
 use App\Services\Kb\KeywordKbSearch;
 use App\Support\Audit;
 use Illuminate\Auth\Events\Failed;
-use Illuminate\Auth\Events\Lockout;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Auth\Events\PasswordReset;
@@ -81,7 +80,6 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(fn (Login $event) => Audit::record('login', ['account' => $event->user->getAuthIdentifier()]));
         Event::listen(fn (Logout $event) => Audit::record('logout', ['account' => $event->user->getAuthIdentifier()]));
         Event::listen(fn (Failed $event) => Audit::record('login.failed', ['email' => $event->credentials['email'] ?? null]));
-        Event::listen(fn (Lockout $event) => Audit::record('login.locked-out', ['email' => $event->request->input('email')]));
         Event::listen(fn (PasswordReset $event) => Audit::record('password.reset', ['account' => $event->user->getAuthIdentifier()]));
     }
 
