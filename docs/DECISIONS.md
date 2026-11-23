@@ -379,7 +379,7 @@ et de « quelle transition est valide ». C'est ce que préparait la décision D
 
 ### D56 — Le serveur dit à l'application ce qui est permis
 
-Le détail d'un ticket contient `allowed_statuses` : les statuses que ce technicien peut choisir
+Le détail d'un ticket contient `allowed_statuses` : les statuts que ce technicien peut choisir
 maintenant. L'application affiche un bouton par entrée. La machine à états n'est pas recopiée
 en Kotlin : si une règle change côté serveur, l'application suit sans mise à jour.
 
@@ -394,3 +394,28 @@ Renvoyer un modèle Eloquent brut exposerait toute nouvelle colonne par accident
 Les routes sont préfixées par `/api/v1` : une future version incompatible pourra cohabiter avec
 l'application déjà installée sur les téléphones. La Gate `use-mobile-api` ferme toute l'API aux
 autres rôles, et la connexion est limitée à 5 tentatives par minute.
+
+### D59 — Application mobile en deux modules
+
+`core` est du Kotlin pur : l'interface Retrofit, les objets JSON, les dépôts de données et la
+traduction des erreurs. `app` contient ce qui dépend d'Android : écrans Compose, ViewModels,
+stockage du jeton. Tout ce qui parle au serveur se teste ainsi sur la JVM en quelques secondes,
+sans émulateur, y compris par un test qui fait un parcours complet contre un vrai serveur Triage.
+
+### D60 — Un état immuable par écran
+
+Chaque écran a un `ViewModel` qui expose un `StateFlow` d'un état immuable (`data class`).
+L'écran Compose affiche cet état et renvoie les actions de l'utilisateur. La logique n'est pas
+dans l'interface : c'est le schéma recommandé par Google (flux de données unidirectionnel).
+
+### D61 — Les erreurs sont des valeurs
+
+Un appel à l'API renvoie un `ApiResult` : une valeur, ou un `ApiFailure` typé (non connecté,
+interdit, introuvable, invalide, réseau, serveur) avec un message en français. Aucun écran n'a
+de `try/catch`, et un jeton refusé par le serveur ramène automatiquement à l'écran de connexion.
+
+### D62 — Seul le jeton est stocké sur le téléphone
+
+Le mot de passe sert une fois, pour obtenir le jeton, puis il est oublié. Le jeton est dans le
+stockage privé de l'application, exclu des sauvegardes Android. Le HTTP non chiffré n'est
+accepté que dans la version de débogage ; une version publiée exige HTTPS.

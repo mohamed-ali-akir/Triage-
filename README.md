@@ -16,7 +16,7 @@ une priorité et une réponse ; **un technicien valide toujours avant toute acti
 | 3 | Base de connaissances, réponses suggérées avec sources, détection des doublons | Terminée |
 | 4 | Évaluation de l'IA, modèle local, tableau de bord, délais cibles, purge RGPD | Terminée |
 | 5a | API REST du technicien (Sanctum) | Terminée |
-| 5b | Application Android du technicien | Code écrit, à compiler dans Android Studio |
+| 5b | Application Android du technicien (dossier `mobile/`) | Terminée, à essayer sur un émulateur |
 
 ## Documentation
 
@@ -25,6 +25,7 @@ une priorité et une réponse ; **un technicien valide toujours avant toute acti
 - [Journal des décisions techniques](docs/DECISIONS.md)
 - [Protection des données personnelles (RGPD)](docs/RGPD.md)
 - [API REST de l'application mobile](docs/API.md)
+- [Application Android du technicien](mobile/README.md)
 - [Évaluations du tri par IA](docs/evaluations/README.md)
 
 ## Prérequis
@@ -186,6 +187,13 @@ techniciens sur les suggestions de l'IA, consommation de l'IA par jour.
 
 ![Tableau de bord](docs/captures/tableau-de-bord.png)
 
+## Application mobile
+
+Le dossier `mobile/` contient l'application Android du technicien (Kotlin, Jetpack Compose,
+Retrofit) : connexion, tickets assignés, détail, changement de statut, réponse. Elle utilise
+l'API REST décrite dans [docs/API.md](docs/API.md). Installation et lancement :
+[mobile/README.md](mobile/README.md).
+
 ## Données personnelles
 
 ```bash
@@ -227,7 +235,8 @@ composer quality     # les trois à la suite
 ```
 
 La CI GitHub Actions exécute les mêmes contrôles à chaque pull request : tests sur SQLite
-(PHP 8.3 et 8.4) et sur MySQL, PHPStan, Pint, `composer audit` et compilation des assets.
+(PHP 8.3 et 8.4) et sur MySQL, PHPStan, Pint, `composer audit`, compilation des assets, tests et
+compilation de l'application mobile.
 
 ## Organisation du code
 
