@@ -27,6 +27,33 @@
     </div>
 
     @can('reply', $ticket)
+        @if ($suggestion?->hasReply())
+            <div class="mt-6 rounded-md border border-violet-200 bg-violet-50/60 p-4 text-sm">
+                <div class="mb-2 flex flex-wrap items-center justify-between gap-2">
+                    <h3 class="font-semibold text-slate-900">Réponse suggérée par l'IA</h3>
+                    <button type="button" wire:click="useSuggestedReply"
+                            class="rounded-md border border-violet-300 bg-white px-3 py-1 text-xs font-medium text-violet-800 hover:bg-violet-50">
+                        Utiliser cette réponse
+                    </button>
+                </div>
+
+                <p class="whitespace-pre-line leading-relaxed text-slate-700">{{ $suggestion->reply }}</p>
+
+                <p class="mt-3 text-xs text-slate-600">
+                    Sources :
+                    @foreach ($suggestion->articles as $article)
+                        <a href="{{ route('kb.show', $article) }}" target="_blank" rel="noopener" class="text-indigo-700 underline">{{ $article->title }}</a>@if (! $loop->last), @endif
+                    @endforeach
+                </p>
+
+                <p class="mt-1 text-xs text-slate-500">Brouillon à relire : il n'est envoyé que si vous cliquez sur « Envoyer ».</p>
+            </div>
+        @elseif ($suggestion?->reply_status === \App\Enums\ReplyStatus::NoArticle)
+            <p class="mt-6 rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                Aucun article de la base de connaissances ne répond à ce ticket : l'IA ne propose pas de réponse.
+            </p>
+        @endif
+
         <form wire:submit="post" class="mt-6 space-y-3 border-t border-slate-200 pt-4">
             <div class="space-y-1">
                 <label for="body" class="block text-sm font-medium text-slate-700">Votre message</label>

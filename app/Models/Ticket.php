@@ -112,6 +112,16 @@ class Ticket extends Model
     }
 
     /**
+     * The most recent suggestion, whatever the technician decided about it.
+     *
+     * @return HasOne<AiSuggestion, $this>
+     */
+    public function latestSuggestion(): HasOne
+    {
+        return $this->hasOne(AiSuggestion::class)->latestOfMany();
+    }
+
+    /**
      * Sort for the technician queue: tickets to triage first, then the most
      * urgent, and the oldest first within the same priority.
      *
