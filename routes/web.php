@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Controllers\Admin\AiLogController;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\KbArticleController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\AiSuggestionController;
@@ -42,6 +44,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/notifications/{notification}', [NotificationController::class, 'show'])->name('notifications.show');
 
     Route::prefix('admin')->name('admin.')->middleware('can:access-admin')->group(function () {
+        Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+        Route::get('/ai-logs', [AiLogController::class, 'index'])->name('ai-logs.index');
         Route::resource('users', UserController::class)->except(['show', 'destroy']);
         Route::resource('categories', CategoryController::class)->except(['show']);
         Route::resource('kb-articles', KbArticleController::class)->except(['show']);

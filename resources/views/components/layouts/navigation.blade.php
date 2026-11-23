@@ -14,9 +14,11 @@
             <x-nav-link :href="route('tickets.create')" :active="request()->routeIs('tickets.create')">Nouveau ticket</x-nav-link>
 
             @can('access-admin')
+                <x-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')">Tableau de bord</x-nav-link>
                 <x-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')">Comptes</x-nav-link>
                 <x-nav-link :href="route('admin.categories.index')" :active="request()->routeIs('admin.categories.*')">Catégories</x-nav-link>
                 <x-nav-link :href="route('admin.kb-articles.index')" :active="request()->routeIs('admin.kb-articles.*')">Articles</x-nav-link>
+                <x-nav-link :href="route('admin.ai-logs.index')" :active="request()->routeIs('admin.ai-logs.*')">Journal IA</x-nav-link>
             @endcan
         </nav>
 

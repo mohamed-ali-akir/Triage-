@@ -59,8 +59,12 @@ test('the demo data shows AI suggestions in every state without calling any AI',
     $byStatus = AiSuggestion::query()->get()->countBy(fn (AiSuggestion $suggestion) => $suggestion->status->value);
 
     expect($byStatus->all())->toEqualCanonicalizing(['pending' => 3, 'accepted' => 7, 'modified' => 2, 'rejected' => 1])
-        ->and(AiLog::count())->toBe(0)
+        // No AI is called: the log lines of the demonstration are written by the seeder itself.
         ->and(app(AiProvider::class)->calls)->toBe([])
+        ->and(AiLog::query()->where('purpose', 'classification')->where('success', true)->count())->toBe(13)
+        ->and(AiLog::query()->where('purpose', 'reply')->count())->toBe(3)
+        ->and(AiLog::query()->where('error_code', 'timeout')->count())->toBe(2)
+        ->and(AiLog::query()->where('created_at', '>', now())->exists())->toBeFalse()
         // One pending suggestion is below the confidence threshold, to show the warning badge.
         ->and(AiSuggestion::query()->where('status', 'pending')->get()->filter->hasLowConfidence())->toHaveCount(1);
 });
