@@ -3,12 +3,9 @@
 use App\Services\Ai\PromptRepository;
 
 test('a prompt is loaded from resources/prompts and its placeholders are replaced', function () {
-    $prompt = (new PromptRepository)->render('classify-user', [
-        'title' => 'Wifi en panne',
-        'description' => 'Plus de réseau en salle de réunion.',
-    ]);
+    $prompt = (new PromptRepository)->render('classify-user', ['ticket' => 'Titre : Wifi en panne']);
 
-    expect($prompt)->toBe("<ticket>\nTitre : Wifi en panne\n\nDescription :\nPlus de réseau en salle de réunion.\n</ticket>");
+    expect($prompt)->toBe("<ticket>\nTitre : Wifi en panne\n</ticket>");
 });
 
 test('the system prompt tells the model that the ticket is data, not instructions', function () {

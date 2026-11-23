@@ -2,7 +2,8 @@
 
 namespace App\Actions\Tickets;
 
-use App\Enums\TicketStatus;
+use App\Enums\TriageMode;
+use App\Jobs\ClassifyTicket;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Services\Tickets\TicketWorkflow;
@@ -22,9 +23,16 @@ class CreateTicket
 
             $this->workflow->recordCreation($ticket, $requester);
 
-            // Phase 1: there is no AI yet, so the ticket goes straight to the manual triage queue.
-            // Phase 2 will dispatch the classification job here instead.
-            return $this->workflow->transition($ticket, TicketStatus::PendingValidation);
+            if (! config('ai.enabled')) {
+                // No AI: the ticket goes straight to the manual triage queue.
+                return $this->workflow->queueForValidation($ticket, TriageMode::Manual);
+            }
+
+            // The AI is called later, by a queue worker: the user never waits for it.
+            // The job is only sent once this transaction is committed.
+            ClassifyTicket::dispatch($ticket)->afterCommit();
+
+            return $ticket;
         });
     }
 }

@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use App\Enums\AiSuggestionStatus;
 use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
+use App\Enums\TriageMode;
 use Database\Factories\TicketFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -11,6 +13,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 // Status, priority, category and assignee are not mass assignable on purpose:
 // they only change through App\Services\Tickets\TicketWorkflow, which records the history.
@@ -35,6 +38,7 @@ class Ticket extends Model
         return [
             'status' => TicketStatus::class,
             'priority' => TicketPriority::class,
+            'triage_mode' => TriageMode::class,
             'taken_at' => 'datetime',
             'resolved_at' => 'datetime',
             'closed_at' => 'datetime',
@@ -83,6 +87,28 @@ class Ticket extends Model
     public function events(): HasMany
     {
         return $this->hasMany(TicketEvent::class)->oldest('created_at')->oldest('id');
+    }
+
+    /**
+     * Every suggestion the AI made for this ticket.
+     *
+     * @return HasMany<AiSuggestion, $this>
+     */
+    public function suggestions(): HasMany
+    {
+        return $this->hasMany(AiSuggestion::class);
+    }
+
+    /**
+     * The suggestion still waiting for the decision of a technician, if any.
+     *
+     * @return HasOne<AiSuggestion, $this>
+     */
+    public function pendingSuggestion(): HasOne
+    {
+        return $this->hasOne(AiSuggestion::class)
+            ->where('status', AiSuggestionStatus::Pending)
+            ->latestOfMany();
     }
 
     /**

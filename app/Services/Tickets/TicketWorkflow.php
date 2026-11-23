@@ -5,6 +5,7 @@ namespace App\Services\Tickets;
 use App\Enums\TicketEventType;
 use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
+use App\Enums\TriageMode;
 use App\Exceptions\InvalidTicketTransition;
 use App\Exceptions\TicketNotAssignable;
 use App\Models\Category;
@@ -45,6 +46,17 @@ class TicketWorkflow
 
             return $ticket;
         });
+    }
+
+    /**
+     * The triage is prepared (by the AI, or not at all): the ticket now waits
+     * for a technician. This is the only way out of the "new" status.
+     */
+    public function queueForValidation(Ticket $ticket, TriageMode $mode): Ticket
+    {
+        $ticket->triage_mode = $mode;
+
+        return $this->transition($ticket, TicketStatus::PendingValidation);
     }
 
     /**
