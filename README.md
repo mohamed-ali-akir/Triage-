@@ -182,6 +182,9 @@ Le rapport donne la précision avec sa marge d'erreur, la précision par catégo
 de confusion, le temps moyen, le coût estimé et la fiabilité du score de confiance. Détails et
 limites : [docs/evaluations/README.md](docs/evaluations/README.md).
 
+Premier résultat réel, avec deux petits modèles locaux : 60 % et 62 % sur la catégorie, contre
+78 % pour la référence par mots-clés. L'évaluation avec Claude reste à faire (elle demande une clé).
+
 ### Modèle local avec Ollama
 
 Avec `AI_PROVIDER=ollama`, le modèle tourne sur votre machine : aucune donnée ne sort et un

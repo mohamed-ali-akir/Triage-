@@ -50,5 +50,37 @@ Une évaluation complète avec l'IA fait 60 appels (jusqu'à 120 si des réponse
 | Fichier | Contenu |
 |---|---|
 | [`2026-11-23-reference-mots-cles.md`](2026-11-23-reference-mots-cles.md) | Référence par mots-clés seule : 78 % ± 10 sur la catégorie |
+| [`2026-11-23-modeles-locaux-ollama.md`](2026-11-23-modeles-locaux-ollama.md) | Deux modèles locaux (Ollama) comparés à la référence |
 
-Aucune évaluation avec une IA réelle n'a encore été enregistrée : elle demande une clé d'API.
+## Première évaluation réelle : deux petits modèles locaux
+
+Conditions : Ollama 0.32.15, sans carte graphique (4 cœurs), les 60 tickets, le même prompt et
+le même code que pour un vrai ticket.
+
+| Méthode | Catégorie | Priorité | Catégorie et priorité | Temps moyen |
+|---|---|---|---|---|
+| Référence par mots-clés | 78 % ± 10 | 68 % ± 12 | 52 % ± 13 | < 1 ms |
+| `llama3.2:3b` | 60 % ± 12 | 55 % ± 13 | 28 % ± 11 | 5,1 s |
+| `qwen2.5:1.5b` | 62 % ± 12 | 42 % ± 12 | 27 % ± 11 | 2,3 s |
+
+Ce que ces chiffres montrent :
+
+- **Un petit modèle local fait moins bien que des mots-clés.** L'écart sur la catégorie (17 à
+  18 points) dépasse la marge d'erreur de la différence (± 16 points). Sans cette mesure, on
+  aurait pu croire que « mettre de l'IA » améliorait forcément le tri.
+- **Le score de confiance de ces modèles ne vaut rien.** `llama3.2:3b` se dit sûr de lui pour
+  59 tickets sur 60, alors qu'il n'a entièrement raison que pour 29 % d'entre eux. Le badge
+  « Confiance faible » n'aurait aucun sens avec ce modèle.
+- **Le ton trompe les petits modèles.** Le ticket « URGENT !!! Installation de Photoshop » est
+  classé en priorité critique par `qwen2.5:1.5b`, comme le fait la référence par mots-clés.
+- **Les catégories floues sont les plus difficiles** : `autre` et `reseau` tombent à 20 % avec
+  `llama3.2:3b`, qui range les pannes de réseau dans « accès et comptes ».
+- **Rien n'a coûté un centime ni quitté la machine**, au prix de 2 à 5 secondes par ticket.
+
+Ce que ces chiffres ne disent pas : ce que vaut un grand modèle comme Claude sur ce jeu de test.
+Cette évaluation demande une clé d'API et reste à faire ; c'est elle qui dira si l'IA du cloud
+justifie son coût et l'envoi de données à un tiers.
+
+```bash
+php artisan triage:evaluate --model=claude-opus-5-5 --model=claude-haiku-5-5
+```

@@ -306,9 +306,10 @@ méthode de référence sans intelligence (des listes de mots-clés). Sans cette
 ### D45 — Afficher la marge d'erreur
 
 Avec 60 tickets et environ 80 % de précision, la marge d'erreur à 95 % est de ± 10 points
-(formule : 1,96 × √(p(1−p)/n)). Le rapport l'affiche à côté de chaque pourcentage et dit si
-l'écart entre l'IA et la référence est significatif. C'est une limite assumée : mieux vaut un
-chiffre honnête avec sa marge qu'un chiffre précis en apparence.
+(formule : 1,96 × √(p(1−p)/n)). Le rapport l'affiche à côté de chaque pourcentage. Pour dire
+si l'écart entre l'IA et la référence est significatif, il le compare à la marge d'erreur de
+la différence, qui combine les deux incertitudes (racine de la somme des carrés) : environ
+± 16 points ici. Mieux vaut un chiffre honnête avec sa marge qu'un chiffre précis en apparence.
 
 ### D46 — Vérifier que le score de confiance sert à quelque chose
 
@@ -333,7 +334,9 @@ sont donc pas faussées par une évaluation.
 
 `OllamaProvider` implémente `AiProvider` comme `AnthropicProvider` : aucun autre fichier ne
 change. Un modèle local ne coûte rien et ne fait sortir aucune donnée, mais il est plus lent
-et souvent moins précis. `triage:evaluate --provider=ollama` donne les chiffres pour décider.
+et moins précis. La première évaluation réelle l'a mesuré : `llama3.2:3b` et `qwen2.5:1.5b`
+obtiennent 60 % et 62 % sur la catégorie, contre 78 % pour la référence par mots-clés
+(`docs/evaluations/`). Un petit modèle local ne suffit donc pas pour ce tri.
 
 ### D50 — Délais cibles en heures calendaires
 
