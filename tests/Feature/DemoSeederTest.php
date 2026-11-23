@@ -5,6 +5,7 @@ use App\Enums\UserRole;
 use App\Models\AiLog;
 use App\Models\AiSuggestion;
 use App\Models\Category;
+use App\Models\KbArticle;
 use App\Models\Ticket;
 use App\Models\TicketEvent;
 use App\Models\User;
@@ -62,6 +63,25 @@ test('the demo data shows AI suggestions in every state without calling any AI',
         ->and(app(AiProvider::class)->calls)->toBe([])
         // One pending suggestion is below the confidence threshold, to show the warning badge.
         ->and(AiSuggestion::query()->where('status', 'pending')->get()->filter->hasLowConfidence())->toHaveCount(1);
+});
+
+test('the demo data contains a knowledge base, drafts of replies and a pair of duplicates', function () {
+    $this->seed();
+
+    expect(KbArticle::query()->published()->count())->toBe(9)
+        ->and(KbArticle::query()->where('is_published', false)->count())->toBe(1)
+        ->and(AiSuggestion::query()->where('reply_status', 'proposed')->count())->toBe(2)
+        ->and(AiSuggestion::query()->where('reply_status', 'no_article')->count())->toBe(1);
+
+    // Every proposed reply cites its source.
+    AiSuggestion::query()->where('reply_status', 'proposed')->get()
+        ->each(fn (AiSuggestion $suggestion) => expect($suggestion->articles)->toHaveCount(1));
+
+    // The two tickets about the printer of the 2nd floor are linked.
+    $printerTickets = Ticket::query()->where('title', 'like', '%imprimante du 2e étage%')->get();
+
+    expect($printerTickets)->toHaveCount(2)
+        ->and($printerTickets->last()->duplicateOf->modelKeys())->toBe([$printerTickets->first()->id]);
 });
 
 test('seeded dates are recent and never in the future', function () {

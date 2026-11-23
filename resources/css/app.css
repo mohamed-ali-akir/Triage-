@@ -2,3 +2,48 @@
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
+
+/* Rendered Markdown of a knowledge base article. */
+.kb-content {
+    @apply text-sm leading-relaxed text-slate-700;
+}
+
+.kb-content h1,
+.kb-content h2,
+.kb-content h3 {
+    @apply mb-2 mt-5 font-semibold text-slate-900;
+}
+
+.kb-content h1 {
+    @apply text-lg;
+}
+
+.kb-content h2 {
+    @apply text-base;
+}
+
+.kb-content p,
+.kb-content ul,
+.kb-content ol {
+    @apply mb-3;
+}
+
+.kb-content ul {
+    @apply list-disc pl-5;
+}
+
+.kb-content ol {
+    @apply list-decimal pl-5;
+}
+
+.kb-content code {
+    @apply rounded bg-slate-100 px-1 py-0.5 font-mono text-xs;
+}
+
+.kb-content a {
+    @apply text-indigo-600 underline;
+}
+
+.kb-content > :first-child {
+    @apply mt-0;
+}

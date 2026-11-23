@@ -3,12 +3,26 @@
 namespace App\Providers;
 
 use App\Models\User;
+use App\Services\Kb\FullTextKbSearch;
+use App\Services\Kb\KbSearch;
+use App\Services\Kb\KeywordKbSearch;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
 class AppServiceProvider extends ServiceProvider
 {
+    public function register(): void
+    {
+        // Full-text search where the database offers it, keyword matching elsewhere (SQLite).
+        $this->app->bind(KbSearch::class, function (): KbSearch {
+            return in_array(DB::getDriverName(), ['mysql', 'mariadb'], true)
+                ? $this->app->make(FullTextKbSearch::class)
+                : $this->app->make(KeywordKbSearch::class);
+        });
+    }
+
     public function boot(): void
     {
         $this->defineGates();

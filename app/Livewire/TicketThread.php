@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Actions\Tickets\PostTicketMessage;
+use App\Models\AiSuggestion;
 use App\Models\Ticket;
 use App\Models\TicketMessage;
 use App\Models\User;
@@ -54,9 +55,26 @@ class TicketThread extends Component
         }
     }
 
+    /**
+     * Copy the draft of the AI into the message box. Nothing is sent:
+     * the technician reads it, edits it, then presses "Envoyer".
+     */
+    public function useSuggestedReply(): void
+    {
+        $this->authorize('reply', $this->ticket);
+
+        $suggestion = $this->suggestedReply();
+
+        if ($suggestion !== null) {
+            $this->body = (string) $suggestion->reply;
+            $this->isInternal = false;
+        }
+    }
+
     public function render(): View
     {
         return view('livewire.ticket-thread', [
+            'suggestion' => $this->suggestedReply(),
             'messages' => TicketMessage::query()
                 ->whereBelongsTo($this->ticket)
                 ->visibleTo($this->currentUser())
@@ -65,6 +83,18 @@ class TicketThread extends Component
                 ->oldest('id')
                 ->get(),
         ]);
+    }
+
+    /**
+     * The latest suggestion of the AI, for technicians only: the requester never sees a draft.
+     */
+    private function suggestedReply(): ?AiSuggestion
+    {
+        if (! $this->currentUser()->isTechnician()) {
+            return null;
+        }
+
+        return $this->ticket->latestSuggestion()->with('articles')->first();
     }
 
     private function currentUser(): User

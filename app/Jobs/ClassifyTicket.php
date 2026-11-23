@@ -63,13 +63,16 @@ class ClassifyTicket implements ShouldQueue
         }
 
         DB::transaction(function () use ($classification, $workflow): void {
-            $this->ticket->suggestions()->create([
+            $suggestion = $this->ticket->suggestions()->create([
                 'category_id' => $classification->category->id,
                 'priority' => $classification->priority,
                 'confidence' => $classification->confidence,
             ]);
 
             $workflow->queueForValidation($this->ticket, TriageMode::Ai);
+
+            // Next step, in its own job: draft a reply from the knowledge base.
+            SuggestReply::dispatch($suggestion)->afterCommit();
         });
     }
 

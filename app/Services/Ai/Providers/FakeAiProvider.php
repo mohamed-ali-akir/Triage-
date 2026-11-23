@@ -68,7 +68,8 @@ class FakeAiProvider implements AiProvider
     }
 
     /**
-     * Pick the first allowed value of every enumerated field of the schema.
+     * Build the most neutral answer the schema allows: the first allowed value
+     * of an enumerated field, an empty list, false, or a middle score.
      *
      * @param  array<string, mixed>|null  $jsonSchema
      */
@@ -77,7 +78,12 @@ class FakeAiProvider implements AiProvider
         $answer = [];
 
         foreach ($jsonSchema['properties'] ?? [] as $field => $definition) {
-            $answer[$field] = $definition['enum'][0] ?? 0.5;
+            $answer[$field] = match ($definition['type'] ?? null) {
+                'array' => [],
+                'boolean' => false,
+                'number' => 0.5,
+                default => $definition['enum'][0] ?? '',
+            };
         }
 
         return (string) json_encode($answer);

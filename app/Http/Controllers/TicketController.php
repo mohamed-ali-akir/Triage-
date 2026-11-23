@@ -53,7 +53,7 @@ class TicketController extends Controller
     {
         Gate::authorize('view', $ticket);
 
-        $ticket->load(['requester.department', 'assignee', 'category', 'events.user', 'pendingSuggestion.category']);
+        $ticket->load(['requester.department', 'assignee', 'category', 'events.user', 'pendingSuggestion.category', 'duplicateOf', 'duplicatedBy']);
 
         return view('tickets.show', [
             'ticket' => $ticket,

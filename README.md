@@ -13,7 +13,7 @@ une priorité et une réponse ; **un technicien valide toujours avant toute acti
 |---|---|---|
 | 1 | Socle : authentification, rôles, tickets, machine à états, fil de discussion, notifications, CI | Terminée |
 | 2 | Tri par IA : classification, anonymisation, validation par le technicien, mode dégradé | Terminée |
-| 3 | Base de connaissances et réponses suggérées | À venir |
+| 3 | Base de connaissances, réponses suggérées avec sources, détection des doublons | Terminée |
 | 4 | Évaluation de l'IA et tableau de bord | À venir |
 | 5 | API REST et application mobile du technicien | À venir |
 
@@ -141,6 +141,17 @@ acceptée, modifiée, rejetée) sans qu'aucun appel à une IA soit nécessaire.
 
 ![Suggestion de l'IA](docs/captures/suggestion-ia.png)
 
+### Réponses suggérées et doublons
+
+Quand un article publié de la base de connaissances correspond au ticket, l'IA rédige un
+brouillon de réponse et **cite les articles utilisés**. Si aucun article ne convient, elle le dit
+au lieu d'inventer. Le technicien relit le brouillon, le corrige et l'envoie lui-même.
+
+L'application signale aussi les tickets ouverts qui semblent porter sur le même problème
+(par exemple deux signalements de la même imprimante).
+
+![Réponse suggérée](docs/captures/reponse-suggeree.png)
+
 ## File d'attente
 
 Les notifications (et, à partir de la phase 2, les appels à l'IA) passent par une file
@@ -182,7 +193,8 @@ La CI GitHub Actions exécute les mêmes contrôles à chaque pull request : tes
 | `app/Services/Tickets` | `TicketWorkflow` (seul point d'entrée pour modifier un ticket) et `TicketNotifier` |
 | `app/Services/Ai` | `AiProvider` et ses fournisseurs, `TicketClassifier`, `SuggestionReviewer`, journal des appels |
 | `app/Services/Privacy` | `PiiMasker` : anonymisation avant envoi à l'IA |
-| `app/Jobs` | `ClassifyTicket` : la classification en file d'attente |
+| `app/Services/Kb` | Recherche dans la base de connaissances (plein texte MySQL, repli par mots-clés) |
+| `app/Jobs` | Les trois traitements en file d'attente : classification, réponse suggérée, doublons |
 | `resources/prompts` | Les prompts envoyés à l'IA |
 | `app/Actions` | Opérations partagées entre le web et la future API (créer un ticket, publier un message) |
 | `app/Policies` | Règles d'accès à un ticket |

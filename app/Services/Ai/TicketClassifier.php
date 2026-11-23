@@ -5,8 +5,6 @@ namespace App\Services\Ai;
 use App\Enums\TicketPriority;
 use App\Models\Category;
 use App\Models\Ticket;
-use App\Models\User;
-use App\Services\Privacy\PiiMasker;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
@@ -27,7 +25,7 @@ class TicketClassifier
     public function __construct(
         private readonly AiClient $ai,
         private readonly PromptRepository $prompts,
-        private readonly PiiMasker $masker,
+        private readonly TicketPromptFormatter $formatter,
     ) {}
 
     /**
@@ -75,19 +73,7 @@ class TicketClassifier
 
     private function userPrompt(Ticket $ticket): string
     {
-        $content = "Titre : {$ticket->title}\n\nDescription :\n{$ticket->description}";
-
-        $masked = $this->masker->mask($content, User::query()->pluck('name')->all());
-
-        return $this->prompts->render('classify-user', ['ticket' => $this->neutraliseTags($masked->text)]);
-    }
-
-    /**
-     * A ticket must not be able to close the <ticket> block and speak outside of it.
-     */
-    private function neutraliseTags(string $text): string
-    {
-        return (string) preg_replace('/<\s*\/?\s*ticket\s*>/iu', '[balise retirée]', $text);
+        return $this->prompts->render('classify-user', ['ticket' => $this->formatter->format($ticket)->text]);
     }
 
     /**
