@@ -39,7 +39,7 @@ Variables à renseigner dans `.env` :
 | N° | Faiblesse | Correction | Code | Test |
 |---|---|---|---|---|
 | 3 | Changer de mot de passe ne déconnectait personne | Les autres sessions sont fermées et les jetons mobiles révoqués, aussi quand le rôle change | `bootstrap/app.php`, `User::booted()` | `AccountProtectionTest` |
-| 4 | « Mot de passe oublié » révélait quelles adresses ont un compte | Même réponse dans tous les cas, 5 demandes par minute ; la connexion vérifie toujours un hachage | `PasswordResetLinkRequested`, `CredentialChecker` | `AccountProtectionTest` |
+| 4 | « Mot de passe oublié » révélait quelles adresses ont un compte | Même réponse et même travail dans tous les cas (un hachage, e-mail envoyé par la file d'attente), 5 demandes par minute ; la connexion vérifie toujours un hachage | `PasswordResetLinkRequested`, `ResetPasswordNotification`, `CredentialChecker` | `AccountProtectionTest` |
 | 5 | Aucune limite de débit une fois connecté | 20 tickets par heure, 10 messages par minute, 120 appels d'API par minute, par compte | `AppServiceProvider`, `TicketThread`, `config/security.php` | `HardeningTest` |
 | 6 | Aucun en-tête de sécurité HTTP | `X-Frame-Options`, `Content-Security-Policy`, `nosniff`, HSTS en HTTPS ; cookie de session réservé à HTTPS en production | `AddSecurityHeaders`, `config/session.php` | `HardeningTest` |
 | 7 | Injection de prompt partiellement bloquée | Plus aucun chevron dans un ticket ; variables du prompt remplacées en une passe ; le prompt interdit de recopier un secret d'un article | `TicketPromptFormatter`, `PromptRepository`, `reply-system.md` | `PromptInjectionTest`, `PromptRepositoryTest` |
@@ -91,6 +91,9 @@ le serveur.
   au changement de mot de passe.
 - **L'épinglage de certificat est une option de compilation**, pas un réglage par défaut : il
   faut connaître l'empreinte du certificat du serveur.
+- **Le temps de réponse est égalisé, pas identique.** « Mot de passe oublié » et la connexion font
+  le même travail coûteux pour un compte connu ou inconnu, mais quelques écritures en base
+  diffèrent encore. L'écart est de l'ordre de la milliseconde, noyé dans celui du réseau.
 - **La limite par compte permet de gêner quelqu'un** : 20 mauvaises tentatives bloquent la
   connexion à ce compte pendant un quart d'heure. C'est le prix d'une protection contre une
   attaque répartie sur plusieurs machines.

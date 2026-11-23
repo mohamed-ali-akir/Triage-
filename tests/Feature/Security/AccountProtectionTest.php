@@ -2,10 +2,14 @@
 
 use App\Enums\UserRole;
 use App\Models\User;
-use Illuminate\Auth\Notifications\ResetPassword;
+use App\Notifications\ResetPasswordNotification;
+use Illuminate\Contracts\Queue\ShouldBeEncrypted;
+use Illuminate\Notifications\SendQueuedNotifications;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\Queue;
 
 /*
  * Protections of the accounts: what a stranger can learn, how many times
@@ -30,8 +34,29 @@ test('the forgotten password form gives the same answer for an unknown address',
         ->and($knownStatus)->toContain('Si un compte correspond');
 
     // Only the real account received a link.
-    Notification::assertSentTo($user, ResetPassword::class);
+    Notification::assertSentTo($user, ResetPasswordNotification::class);
     Notification::assertCount(1);
+});
+
+test('the reset e-mail is sent by the queue, in an encrypted job', function () {
+    Queue::fake();
+    $user = User::factory()->create();
+
+    $this->post('/forgot-password', ['email' => $user->email])->assertSessionHas('status');
+
+    // Nothing was e-mailed during the request: a worker will do it.
+    Queue::assertPushed(SendQueuedNotifications::class, function (SendQueuedNotifications $job) use ($user): bool {
+        return $job->notification instanceof ResetPasswordNotification
+            && $job->notification instanceof ShouldBeEncrypted
+            && $job->notifiables->first()->is($user);
+    });
+});
+
+test('an unknown address costs a hash too, like the token of a known address', function () {
+    Notification::fake();
+    Hash::shouldReceive('make')->once()->andReturn('un-hachage');
+
+    $this->post('/forgot-password', ['email' => 'personne@exemple.fr'])->assertSessionHas('status');
 });
 
 test('the forgotten password form is rate limited', function () {

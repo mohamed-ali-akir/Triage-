@@ -476,7 +476,9 @@ sont remplacées en une seule passe. Le ticket reste du texte, quoi qu'il contie
 
 « Mot de passe oublié » répond toujours qu'un lien part « si un compte correspond ». La connexion
 vérifie toujours un hachage, même pour un compte inconnu, pour que le temps de réponse ne dise
-rien non plus. Un seul service, `CredentialChecker`, sert au site et à l'API.
+rien non plus. Un seul service, `CredentialChecker`, sert au site et à l'API. L'e-mail de
+réinitialisation part par la file d'attente, dans un job chiffré : l'envoi ne ralentit plus la
+réponse, et le jeton de réinitialisation n'est pas lisible dans la table des jobs.
 
 ### D70 — Des limites par compte
 
