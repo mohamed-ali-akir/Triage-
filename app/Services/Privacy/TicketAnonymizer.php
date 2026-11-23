@@ -2,7 +2,9 @@
 
 namespace App\Services\Privacy;
 
+use App\Models\AiSuggestion;
 use App\Models\Ticket;
+use App\Models\TicketMessage;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -18,6 +20,8 @@ class TicketAnonymizer
     public const ERASED_TITLE = 'Ticket anonymisé';
 
     public const ERASED_DESCRIPTION = '[Contenu supprimé à la fin de la durée de conservation]';
+
+    public const ERASED_PERSON = '[personne anonymisée]';
 
     /**
      * Erase the texts of a ticket: title, description, discussion and AI drafts.
@@ -51,6 +55,9 @@ class TicketAnonymizer
                 $this->anonymizeTicket($ticket);
             }
 
+            // Colleagues may have named this person in their own tickets and messages.
+            $this->eraseMentions($user);
+
             $user->notifications()->delete();
 
             $user->forceFill([
@@ -68,5 +75,31 @@ class TicketAnonymizer
 
             return $tickets->count();
         });
+    }
+
+    /**
+     * Replace the name and the e-mail address of the person wherever someone else wrote them:
+     * tickets and messages of other people, and reply drafts of the AI.
+     */
+    private function eraseMentions(User $user): void
+    {
+        foreach ([$user->name, $user->email] as $mention) {
+            $erase = fn (?string $text): ?string => $text === null ? null : str_ireplace($mention, self::ERASED_PERSON, $text);
+
+            Ticket::query()
+                ->where(fn ($query) => $query->whereLike('title', "%{$mention}%")->orWhereLike('description', "%{$mention}%"))
+                ->each(fn (Ticket $ticket) => $ticket->forceFill([
+                    'title' => $erase($ticket->title),
+                    'description' => $erase($ticket->description),
+                ])->save());
+
+            TicketMessage::query()
+                ->whereLike('body', "%{$mention}%")
+                ->each(fn (TicketMessage $message) => $message->forceFill(['body' => $erase($message->body)])->save());
+
+            AiSuggestion::query()
+                ->whereLike('reply', "%{$mention}%")
+                ->each(fn (AiSuggestion $suggestion) => $suggestion->forceFill(['reply' => $erase($suggestion->reply)])->save());
+        }
     }
 }
