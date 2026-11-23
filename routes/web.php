@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TicketAssignmentController;
 use App\Http\Controllers\TicketController;
@@ -24,6 +25,10 @@ Route::middleware('auth')->group(function () {
 
     // The technician queue is a Livewire component embedded in a plain Blade view.
     Route::view('/queue', 'queue.index')->middleware('can:view-queue')->name('queue.index');
+
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+    Route::get('/notifications/{notification}', [NotificationController::class, 'show'])->name('notifications.show');
 
     Route::prefix('admin')->name('admin.')->middleware('can:access-admin')->group(function () {
         Route::resource('users', UserController::class)->except(['show', 'destroy']);

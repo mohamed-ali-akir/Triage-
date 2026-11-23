@@ -19,6 +19,17 @@
         </nav>
 
         <div class="flex items-center gap-3 text-sm">
+            @php($unreadCount = auth()->user()->unreadNotifications()->count())
+
+            <x-nav-link :href="route('notifications.index')" :active="request()->routeIs('notifications.*')">
+                Notifications
+                @if ($unreadCount > 0)
+                    <span class="ml-1 inline-flex min-w-5 items-center justify-center rounded-full bg-indigo-600 px-1.5 text-xs font-semibold text-white">
+                        {{ $unreadCount }}
+                    </span>
+                @endif
+            </x-nav-link>
+
             <x-nav-link :href="route('profile.show')" :active="request()->routeIs('profile.*')">
                 {{ auth()->user()->name }}
             </x-nav-link>

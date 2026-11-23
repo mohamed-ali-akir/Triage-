@@ -18,6 +18,8 @@ use Illuminate\Support\Facades\DB;
  */
 class TicketWorkflow
 {
+    public function __construct(private readonly TicketNotifier $notifier) {}
+
     /**
      * Move a ticket to another status.
      *
@@ -39,6 +41,7 @@ class TicketWorkflow
             $ticket->save();
 
             $this->record($ticket, TicketEventType::StatusChanged, $from->value, $to->value, $actor);
+            $this->notifier->statusChanged($ticket, $to, $actor);
 
             return $ticket;
         });
