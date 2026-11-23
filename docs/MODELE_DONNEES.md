@@ -93,7 +93,10 @@ Contraintes :
 | `ticket_messages.ticket_id`, `ticket_events.ticket_id` | `ON DELETE CASCADE` |
 | `ticket_events.user_id` | nullable (action du système) |
 
-Index : `tickets (status)`, `tickets (requester_id)`, `tickets (assignee_id)`.
+Index : `tickets (status)`, plus les index créés par chaque clé étrangère.
+
+Tables techniques fournies par Laravel : `sessions`, `password_reset_tokens`, `cache`, `jobs`
+(file d'attente) et `notifications`.
 
 ## 3. Machine à états du ticket
 

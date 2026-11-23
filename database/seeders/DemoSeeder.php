@@ -1,0 +1,300 @@
+<?php
+
+namespace Database\Seeders;
+
+use App\Actions\Tickets\CreateTicket;
+use App\Actions\Tickets\PostTicketMessage;
+use App\Enums\TicketPriority;
+use App\Enums\TicketStatus;
+use App\Enums\UserRole;
+use App\Models\Category;
+use App\Models\Department;
+use App\Models\Ticket;
+use App\Models\User;
+use App\Services\Tickets\TicketWorkflow;
+use Illuminate\Database\Seeder;
+use Illuminate\Support\Carbon;
+
+/**
+ * Demonstration data: 1 administrator, 2 technicians, 5 users and tickets in every status.
+ *
+ * Tickets are not inserted directly: they go through the same actions and workflow
+ * as the real application, so their history and notifications are consistent.
+ */
+class DemoSeeder extends Seeder
+{
+    private Carbon $startedAt;
+
+    public function __construct(
+        private readonly CreateTicket $createTicket,
+        private readonly PostTicketMessage $postMessage,
+        private readonly TicketWorkflow $workflow,
+    ) {}
+
+    public function run(): void
+    {
+        // Deliver notifications immediately instead of queueing them, so that the
+        // demo shows them even before a queue worker is started.
+        config(['queue.default' => 'sync']);
+
+        // The real current time, read before the clock is moved to simulate the past.
+        $this->startedAt = Carbon::now();
+
+        $users = $this->createUsers();
+
+        foreach ($this->scenarios() as $scenario) {
+            $this->play($scenario, $users);
+        }
+
+        // Give the clock back: the seeder moved it to simulate the past.
+        Carbon::setTestNow();
+    }
+
+    /**
+     * @return array<string, User>
+     */
+    private function createUsers(): array
+    {
+        $accounts = [
+            'admin' => ['Alice Martin', 'admin@triage.test', UserRole::Admin, 'Informatique'],
+            'tech1' => ['Thomas Bernard', 'tech1@triage.test', UserRole::Technician, 'Informatique'],
+            'tech2' => ['Sarah Petit', 'tech2@triage.test', UserRole::Technician, 'Informatique'],
+            'user1' => ['Julie Moreau', 'julie.moreau@triage.test', UserRole::User, 'Comptabilité'],
+            'user2' => ['Karim Benali', 'karim.benali@triage.test', UserRole::User, 'Commercial'],
+            'user3' => ['Sophie Lambert', 'sophie.lambert@triage.test', UserRole::User, 'Ressources humaines'],
+            'user4' => ['Marc Dubois', 'marc.dubois@triage.test', UserRole::User, 'Production'],
+            'user5' => ['Élodie Garnier', 'elodie.garnier@triage.test', UserRole::User, 'Direction'],
+        ];
+
+        $users = [];
+
+        foreach ($accounts as $key => [$name, $email, $role, $department]) {
+            $users[$key] = User::updateOrCreate(['email' => $email], [
+                'name' => $name,
+                // Demonstration password only. Never use it outside a demo.
+                'password' => 'password',
+                'role' => $role,
+                'is_active' => true,
+                'department_id' => Department::query()->where('name', $department)->value('id'),
+            ]);
+        }
+
+        return $users;
+    }
+
+    /**
+     * Play one scenario: create the ticket, then move it step by step up to its target status.
+     *
+     * @param  array{title: string, description: string, requester: string, days_ago: int, status: TicketStatus, category?: string, priority?: TicketPriority, technician?: string, messages?: list<array{0: string, 1: string, 2?: bool}>, reopened?: bool}  $scenario
+     * @param  array<string, User>  $users
+     */
+    private function play(array $scenario, array $users): void
+    {
+        // Each step happens a little later than the previous one. Starting six hours
+        // before "now" keeps even today's tickets in the past.
+        $clock = $this->startedAt->copy()->subDays($scenario['days_ago'])->subHours(6);
+        $tick = function () use (&$clock): void {
+            $clock = $clock->copy()->addMinutes(47);
+            Carbon::setTestNow($clock);
+        };
+
+        $tick();
+        $requester = $users[$scenario['requester']];
+        $ticket = $this->createTicket->handle($requester, [
+            'title' => $scenario['title'],
+            'description' => $scenario['description'],
+        ]);
+
+        $technician = isset($scenario['technician']) ? $users[$scenario['technician']] : null;
+
+        if (isset($scenario['category'], $scenario['priority'])) {
+            $tick();
+            $this->workflow->triage(
+                $ticket,
+                Category::query()->where('slug', $scenario['category'])->firstOrFail(),
+                $scenario['priority'],
+                $technician ?? $users['tech1'],
+            );
+        }
+
+        if ($technician !== null) {
+            $tick();
+            $this->workflow->assign($ticket, $technician);
+            $this->advance($ticket, $scenario, $requester, $technician, $users, $tick);
+        }
+    }
+
+    /**
+     * @param  array{status: TicketStatus, messages?: list<array{0: string, 1: string, 2?: bool}>, reopened?: bool}  $scenario
+     * @param  array<string, User>  $users
+     * @param  callable(): void  $tick
+     */
+    private function advance(Ticket $ticket, array $scenario, User $requester, User $technician, array $users, callable $tick): void
+    {
+        $target = $scenario['status'];
+
+        if ($target === TicketStatus::Assigned) {
+            return;
+        }
+
+        $tick();
+        $this->workflow->transition($ticket, TicketStatus::InProgress, $technician);
+
+        foreach ($scenario['messages'] ?? [] as $message) {
+            $tick();
+            $this->postMessage->handle($ticket, $users[$message[0]], $message[1], $message[2] ?? false);
+        }
+
+        if ($target === TicketStatus::WaitingUser) {
+            $tick();
+            $this->workflow->transition($ticket, TicketStatus::WaitingUser, $technician);
+
+            return;
+        }
+
+        if ($target === TicketStatus::InProgress) {
+            return;
+        }
+
+        $tick();
+        $this->workflow->transition($ticket, TicketStatus::Resolved, $technician);
+
+        if ($scenario['reopened'] ?? false) {
+            $tick();
+            $this->workflow->transition($ticket, TicketStatus::InProgress, $requester);
+            $tick();
+            $this->workflow->transition($ticket, TicketStatus::Resolved, $technician);
+        }
+
+        if ($target === TicketStatus::Closed) {
+            $tick();
+            $this->workflow->transition($ticket, TicketStatus::Closed, $requester);
+        }
+    }
+
+    /**
+     * @return list<array{title: string, description: string, requester: string, days_ago: int, status: TicketStatus, category?: string, priority?: TicketPriority, technician?: string, messages?: list<array{0: string, 1: string, 2?: bool}>, reopened?: bool}>
+     */
+    private function scenarios(): array
+    {
+        return [
+            [
+                'title' => 'Souris sans fil qui se déconnecte toutes les cinq minutes',
+                'description' => "Ma souris sans fil perd la connexion plusieurs fois par heure. J'ai déjà changé les piles.",
+                'requester' => 'user3', 'days_ago' => 12, 'status' => TicketStatus::Closed,
+                'category' => 'materiel', 'priority' => TicketPriority::Low, 'technician' => 'tech2',
+                'messages' => [
+                    ['tech2', 'Bonjour, le récepteur USB est sans doute défectueux. Je vous dépose une souris neuve cet après-midi.'],
+                    ['user3', 'Parfait, merci beaucoup.'],
+                ],
+            ],
+            [
+                'title' => 'Question sur la sauvegarde de mes documents',
+                'description' => 'Je voudrais savoir si les fichiers enregistrés sur mon bureau sont sauvegardés, ou seulement ceux du lecteur réseau.',
+                'requester' => 'user5', 'days_ago' => 10, 'status' => TicketStatus::Closed,
+                'category' => 'autre', 'priority' => TicketPriority::Low, 'technician' => 'tech1', 'reopened' => true,
+                'messages' => [
+                    ['tech1', "Bonjour, seul le lecteur réseau P: est sauvegardé chaque nuit. Le bureau ne l'est pas."],
+                    ['user5', 'Merci. Pouvez-vous déplacer mon dossier « Bilans » vers le lecteur réseau ?'],
+                ],
+            ],
+            [
+                'title' => 'Écran externe non détecté sur la station d\'accueil',
+                'description' => "Depuis lundi, mon deuxième écran reste noir quand je branche mon portable sur la station d'accueil.",
+                'requester' => 'user2', 'days_ago' => 8, 'status' => TicketStatus::Closed,
+                'category' => 'materiel', 'priority' => TicketPriority::Normal, 'technician' => 'tech1',
+                'messages' => [
+                    ['tech1', 'Le pilote de la station d\'accueil était obsolète. Je l\'ai mis à jour à distance, pouvez-vous réessayer ?'],
+                    ['user2', 'Ça fonctionne de nouveau, merci !'],
+                ],
+            ],
+            [
+                'title' => 'E-mail suspect : tentative d\'hameçonnage ?',
+                'description' => "J'ai reçu un e-mail qui me demande de confirmer mes identifiants de messagerie via un lien. L'expéditeur m'est inconnu. Je n'ai pas cliqué.",
+                'requester' => 'user1', 'days_ago' => 6, 'status' => TicketStatus::Resolved,
+                'category' => 'messagerie', 'priority' => TicketPriority::High, 'technician' => 'tech2',
+                'messages' => [
+                    ['tech2', 'Expéditeur usurpé, même campagne que la semaine dernière. Domaine à bloquer sur le filtre.', true],
+                    ['tech2', "Vous avez eu le bon réflexe. C'est bien une tentative d'hameçonnage : l'expéditeur est bloqué, vous pouvez supprimer le message."],
+                ],
+            ],
+            [
+                'title' => 'Installation de LibreOffice sur mon poste',
+                'description' => "J'ai besoin de LibreOffice pour ouvrir les fichiers .odt envoyés par un fournisseur.",
+                'requester' => 'user4', 'days_ago' => 5, 'status' => TicketStatus::Resolved,
+                'category' => 'logiciel', 'priority' => TicketPriority::Low, 'technician' => 'tech1',
+                'messages' => [
+                    ['tech1', 'LibreOffice est installé sur votre poste. Il apparaîtra dans le menu Démarrer après un redémarrage.'],
+                ],
+            ],
+            [
+                'title' => 'Le serveur de fichiers est inaccessible pour tout le service',
+                'description' => "Depuis 8 h 30, plus personne à la comptabilité n'accède au lecteur réseau P:. Nous ne pouvons plus travailler sur la clôture mensuelle.",
+                'requester' => 'user1', 'days_ago' => 1, 'status' => TicketStatus::InProgress,
+                'category' => 'reseau', 'priority' => TicketPriority::Critical, 'technician' => 'tech2',
+                'messages' => [
+                    ['tech2', 'Le commutateur de l\'étage ne répond plus au ping. Je vais vérifier sur place.', true],
+                    ['tech2', 'Nous avons identifié une panne sur un équipement réseau de votre étage. Intervention en cours.'],
+                    ['user1', 'Merci, tenez-nous au courant : la clôture doit partir demain.'],
+                ],
+            ],
+            [
+                'title' => 'Impossible de se connecter au VPN depuis mon domicile',
+                'description' => "En télétravail, le client VPN affiche « Échec de l'authentification » alors que mon mot de passe fonctionne au bureau.",
+                'requester' => 'user2', 'days_ago' => 2, 'status' => TicketStatus::InProgress,
+                'category' => 'reseau', 'priority' => TicketPriority::High, 'technician' => 'tech1',
+                'messages' => [
+                    ['tech1', 'Bonjour, votre certificat VPN a expiré hier. Je vous en génère un nouveau.'],
+                ],
+            ],
+            [
+                'title' => 'Nouvelle salariée : création du compte et de la boîte mail',
+                'description' => "Une nouvelle assistante arrive lundi prochain aux ressources humaines. Il lui faut un compte Windows, une boîte mail et l'accès au logiciel de paie.",
+                'requester' => 'user3', 'days_ago' => 3, 'status' => TicketStatus::InProgress,
+                'category' => 'acces-comptes', 'priority' => TicketPriority::Normal, 'technician' => 'tech1',
+            ],
+            [
+                'title' => 'Outlook ne synchronise plus mes e-mails',
+                'description' => 'Outlook affiche « Déconnecté » en bas de la fenêtre depuis ce matin. Je reçois pourtant mes e-mails sur mon téléphone.',
+                'requester' => 'user5', 'days_ago' => 2, 'status' => TicketStatus::WaitingUser,
+                'category' => 'messagerie', 'priority' => TicketPriority::Normal, 'technician' => 'tech2',
+                'messages' => [
+                    ['tech2', 'Bonjour, pouvez-vous me dire si le problème persiste après un redémarrage complet du poste ?'],
+                ],
+            ],
+            [
+                'title' => 'Mot de passe Windows oublié après mes congés',
+                'description' => 'De retour de congés, je ne me souviens plus de mon mot de passe de session et mon compte est maintenant verrouillé.',
+                'requester' => 'user4', 'days_ago' => 1, 'status' => TicketStatus::Assigned,
+                'category' => 'acces-comptes', 'priority' => TicketPriority::High, 'technician' => 'tech1',
+            ],
+            [
+                'title' => 'Excel se ferme tout seul à l\'ouverture d\'un gros fichier',
+                'description' => "Le classeur du budget prévisionnel (environ 40 Mo) fait planter Excel dès l'ouverture. Les autres fichiers s'ouvrent normalement.",
+                'requester' => 'user1', 'days_ago' => 1, 'status' => TicketStatus::Assigned,
+                'category' => 'logiciel', 'priority' => TicketPriority::Normal, 'technician' => 'tech2',
+            ],
+            [
+                'title' => 'Accès au dossier partagé « Contrats clients »',
+                'description' => "Je viens de rejoindre l'équipe commerciale et je n'ai pas accès au dossier partagé des contrats clients.",
+                'requester' => 'user2', 'days_ago' => 0, 'status' => TicketStatus::PendingValidation,
+                'category' => 'acces-comptes', 'priority' => TicketPriority::Normal,
+            ],
+            [
+                'title' => 'Imprimante du 2e étage : bourrage papier permanent',
+                'description' => "L'imprimante du 2e étage affiche « Bourrage papier » même après avoir retiré toutes les feuilles.",
+                'requester' => 'user3', 'days_ago' => 0, 'status' => TicketStatus::PendingValidation,
+            ],
+            [
+                'title' => 'L\'imprimante du 2e étage ne répond plus',
+                'description' => "Impossible d'imprimer sur l'imprimante du deuxième étage : les documents restent bloqués dans la file d'attente.",
+                'requester' => 'user5', 'days_ago' => 0, 'status' => TicketStatus::PendingValidation,
+            ],
+            [
+                'title' => 'Wifi très lent dans la salle de réunion',
+                'description' => "Pendant les visioconférences en salle de réunion, l'image se fige et le son se coupe. Le problème n'existe pas dans les bureaux.",
+                'requester' => 'user4', 'days_ago' => 0, 'status' => TicketStatus::PendingValidation,
+            ],
+        ];
+    }
+}
