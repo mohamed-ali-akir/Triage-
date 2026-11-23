@@ -56,7 +56,6 @@ class TechnicianJourneyTest {
 
         composeRule.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("Discussion"))
         composeRule.onNodeWithText("Discussion").assertIsDisplayed()
-        capture("4-discussion")
 
         // 4. Marking the ticket as resolved goes through the API; the server then
         //    offers the next step ("Clos"), which proves the change was really made.
@@ -64,7 +63,7 @@ class TechnicianJourneyTest {
         composeRule.onNodeWithText("Résolu").performClick()
 
         waitForText("Clos")
-        capture("5-ticket-resolu")
+        capture("4-ticket-resolu")
     }
 
     /**

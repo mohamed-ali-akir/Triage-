@@ -429,6 +429,8 @@ Un test instrumenté pilote la vraie application sur un émulateur Android : con
 ouverture d'un ticket, passage à « Résolu ». Le serveur est un vrai Triage avec les données de
 démonstration, lancé dans le même job de CI. C'est le seul test qui traverse toute la chaîne :
 écran Compose, ViewModel, Retrofit, API Laravel, Policy, machine à états, base de données.
+Il enregistre aussi une capture d'écran par étape, publiée par la CI : les images de la
+documentation viennent de là, donc elles montrent l'application telle qu'elle fonctionne.
 
 ### D64 — Une commande pour vérifier la configuration de l'IA
 

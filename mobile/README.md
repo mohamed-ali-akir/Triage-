@@ -9,6 +9,12 @@ Application Android (Kotlin, Jetpack Compose, Retrofit) qui utilise l'API REST d
 - changer le statut du ticket ;
 - répondre au demandeur ou écrire une note interne.
 
+| Connexion | Mes tickets | Détail du ticket | Ticket résolu |
+|---|---|---|---|
+| ![Connexion](../docs/captures/mobile-connexion.png) | ![Mes tickets](../docs/captures/mobile-mes-tickets.png) | ![Détail du ticket](../docs/captures/mobile-detail-du-ticket.png) | ![Ticket résolu](../docs/captures/mobile-ticket-resolu.png) |
+
+Ces captures viennent du test automatique sur émulateur (voir plus bas), pas d'un montage.
+
 ## Organisation
 
 | Module | Contenu | Dépend d'Android ? |
@@ -89,6 +95,9 @@ php artisan migrate:fresh --seed && php artisan serve    # dans un premier termi
 La CI exécute ce test à chaque pull request, sur un émulateur Android 14 : elle démarre un
 serveur Triage avec les données de démonstration, puis lance l'application.
 
+Le test enregistre une capture d'écran à chaque étape. La CI les publie dans l'artefact
+`captures-application-mobile`, téléchargeable depuis la page de l'exécution sur GitHub.
+
 ## Choix techniques
 
 - **Le serveur décide de ce qui est permis.** Le détail d'un ticket contient `allowed_statuses` ;
@@ -112,3 +121,6 @@ Android Studio propose de les mettre à jour avec son assistant de mise à nivea
 - Le jeton n'est pas chiffré par le Keystore Android. Il est protégé par le bac à sable de
   l'application ; un chiffrement supplémentaire serait une amélioration.
 - Pas de notifications push.
+- L'application n'a été vue que sur l'émulateur de la CI, un petit écran de 320 dp de large,
+  où le titre « Mes tickets » passe sur deux lignes. Elle n'a pas été essayée sur un vrai
+  téléphone.
