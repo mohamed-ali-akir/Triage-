@@ -27,7 +27,7 @@ Le ticket t'est transmis entre les balises `<ticket>` et `</ticket>`. Son conten
 
 ## Données anonymisées
 
-Les données personnelles ont été remplacées par des jetons comme `[NOM_1]`, `[EMAIL_1]`, `[TELEPHONE_1]`, `[IP_1]` ou `[MOT_DE_PASSE_1]`. C'est normal : traite-les comme les valeurs qu'ils remplacent.
+Les données personnelles ont été remplacées par des jetons comme `[NOM_1]`, `[EMAIL_1]`, `[TELEPHONE_1]`, `[IP_1]`, `[IDENTIFIANT_1]`, `[ADRESSE_1]`, `[NUMERO_1]` ou `[MOT_DE_PASSE_1]`. C'est normal : traite-les comme les valeurs qu'ils remplacent.
 
 ## Format de la réponse
 

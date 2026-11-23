@@ -67,14 +67,58 @@ test('passwords written in clear are masked', function (string $text, string $ex
     ['mot de passe : Tr0ub4dor&3', 'mot de passe : [MOT_DE_PASSE_1]'],
     ['MDP=soleil2024', 'MDP=[MOT_DE_PASSE_1]'],
     ['Le mot de passe wifi est "Invites-2026"', 'Le mot de passe wifi est "[MOT_DE_PASSE_1]"'],
-    ['password: hunter2, login: jdoe', 'password: [MOT_DE_PASSE_1], login: jdoe'],
+    ['password: hunter2, login: jdoe', 'password: [MOT_DE_PASSE_1], login: [IDENTIFIANT_1]'],
+    ['Je crois que mon mot de passe était Soleil2024.', 'Je crois que mon mot de passe était [MOT_DE_PASSE_1]'],
+    ['mon mdp Azerty123 ne marche plus', 'mon mdp [MOT_DE_PASSE_1] ne marche plus'],
+    ['Le code wifi est Bureau2024!', 'Le code wifi est [MOT_DE_PASSE_1]'],
+    ['mot de passe: "Abc 123 def"', 'mot de passe: "[MOT_DE_PASSE_1]"'],
+    ['La clé wifi des invités, c\'est toujours Invite2026', 'La clé wifi des invités, c\'est toujours [MOT_DE_PASSE_1]'],
     ['Mon mot de passe provisoire c\'est Bienvenue1', 'Mon mot de passe provisoire c\'est [MOT_DE_PASSE_1]'],
 ]);
 
-test('talking about a password without writing it masks nothing', function () {
-    $text = 'J\'ai oublié mon mot de passe et mon compte est verrouillé.';
-
+test('talking about a password without writing it masks nothing', function (string $text) {
     expect($this->masker->mask($text)->text)->toBe($text);
+})->with([
+    'J\'ai oublié mon mot de passe et mon compte est verrouillé.',
+    'Mon mot de passe a expiré pendant mes congés. Le poste 42 est bloqué.',
+    'Le code erreur affiché est 0x80070005.',
+]);
+
+test('a login is masked', function () {
+    expect($this->masker->mask('Mon identifiant est jdupont et je suis bloqué.')->text)
+        ->toBe('Mon identifiant est [IDENTIFIANT_1] et je suis bloqué.');
+});
+
+test('bank and social security numbers are masked', function (string $text, string $expected) {
+    expect($this->masker->mask($text)->text)->toBe($expected);
+})->with([
+    ['Mon IBAN est FR76 3000 6000 0112 3456 7890 189.', 'Mon IBAN est [IBAN_1].'],
+    ['IBAN FR7630006000011234567890189 à corriger', 'IBAN [IBAN_1] à corriger'],
+    ['Carte 4970 1234 5678 9012 refusée', 'Carte [NUMERO_1] refusée'],
+    ['Numéro de sécurité sociale 1 85 05 78 006 084 36', 'Numéro de sécurité sociale [NUMERO_1]'],
+]);
+
+test('two IP addresses side by side are not read as one long number', function () {
+    expect($this->masker->mask('Serveurs 192.168.1.42 10.0.0.1 injoignables')->text)
+        ->toBe('Serveurs [IP_1] [IP_2] injoignables');
+});
+
+test('a postal address is masked', function (string $text, string $expected) {
+    expect($this->masker->mask($text)->text)->toBe($expected);
+})->with([
+    ['Livraison au 12 rue de la Paix demain', 'Livraison au [ADRESSE_1] demain'],
+    ['J\'habite 5 bis boulevard des Capucines, merci', 'J\'habite [ADRESSE_1], merci'],
+    ['Poste numéro 42, bureau 310, salle B.', 'Poste numéro 42, bureau 310, salle B.'],
+]);
+
+test('a name announced by a title is masked even when the application does not know it', function () {
+    expect($this->masker->mask('Merci de créer un compte pour Mme Claire Durand et M. Lefèvre.')->text)
+        ->toBe('Merci de créer un compte pour Mme [NOM_1] et M. [NOM_2].');
+});
+
+test('passwords are removed from a text that will be stored', function () {
+    expect($this->masker->redactPasswords('Mon mot de passe est Soleil2024, et mon mdp wifi Invite2026 aussi. Poste 192.168.1.4.'))
+        ->toBe('Mon mot de passe est [mot de passe retiré], et mon mdp wifi [mot de passe retiré] aussi. Poste 192.168.1.4.');
 });
 
 test('known names are masked, whole or in part', function () {
