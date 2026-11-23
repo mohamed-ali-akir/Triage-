@@ -9,6 +9,7 @@ use App\Models\TicketMessage;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Attributes\Locked;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
@@ -42,6 +43,17 @@ class TicketThread extends Component
 
         $this->validate();
 
+        // One account cannot flood a thread, nor the mailbox of the other party.
+        $limiterKey = 'ticket-message|'.$this->currentUser()->id;
+
+        if (RateLimiter::tooManyAttempts($limiterKey, (int) config('security.limits.messages_per_minute'))) {
+            $this->addError('body', 'Vous envoyez beaucoup de messages. Patientez une minute.');
+
+            return;
+        }
+
+        RateLimiter::hit($limiterKey, 60);
+
         $statusBefore = $this->ticket->status;
 
         $postTicketMessage->handle($this->ticket, $this->currentUser(), $this->body, $this->isInternal);
@@ -73,6 +85,10 @@ class TicketThread extends Component
 
     public function render(): View
     {
+        // Checked at every refresh, not only when the page was opened:
+        // a right that was withdrawn stops showing the thread at once.
+        $this->authorize('view', $this->ticket);
+
         return view('livewire.ticket-thread', [
             'suggestion' => $this->suggestedReply(),
             'messages' => TicketMessage::query()

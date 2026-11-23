@@ -124,7 +124,8 @@ test('personal data is masked before the ticket is sent', function () {
 
     $sent = $this->ai->calls[0]['user'];
 
-    expect($sent)->toContain('[NOM_1]', '[EMAIL_1]', '[IP_1]', '[TELEPHONE_1]', '[MOT_DE_PASSE_1]');
+    // The password never reached the database: it was removed when the ticket was stored.
+    expect($sent)->toContain('[NOM_1]', '[EMAIL_1]', '[IP_1]', '[TELEPHONE_1]', '[mot de passe retiré]');
 
     foreach (['Sophie', 'Lambert', 'Karim', 'Benali', 'exemple.fr', '192.168.4.12', '06 12 34 56 78', 'Soleil2026'] as $secret) {
         expect($sent)->not->toContain($secret);
