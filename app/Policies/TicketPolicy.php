@@ -24,6 +24,15 @@ class TicketPolicy
         return $user->isStaff() || $ticket->requester_id === $user->id;
     }
 
+    /**
+     * The mobile application only works on the tickets assigned to its technician:
+     * a lost phone opens those tickets, not the whole queue.
+     */
+    public function accessFromMobile(User $user, Ticket $ticket): bool
+    {
+        return $user->isTechnician() && $ticket->assignee_id === $user->id;
+    }
+
     public function create(User $user): bool
     {
         return true;

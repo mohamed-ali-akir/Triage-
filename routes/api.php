@@ -21,8 +21,12 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::get('/me', [AuthController::class, 'me'])->name('me');
 
         Route::get('/tickets', [TicketController::class, 'index'])->name('tickets.index');
-        Route::get('/tickets/{ticket}', [TicketController::class, 'show'])->name('tickets.show');
-        Route::patch('/tickets/{ticket}/status', [TicketStatusController::class, 'update'])->name('tickets.status.update');
-        Route::post('/tickets/{ticket}/messages', [TicketMessageController::class, 'store'])->name('tickets.messages.store');
+
+        // One ticket: only when it is assigned to the technician who holds the token.
+        Route::middleware('can:accessFromMobile,ticket')->group(function () {
+            Route::get('/tickets/{ticket}', [TicketController::class, 'show'])->name('tickets.show');
+            Route::patch('/tickets/{ticket}/status', [TicketStatusController::class, 'update'])->name('tickets.status.update');
+            Route::post('/tickets/{ticket}/messages', [TicketMessageController::class, 'store'])->name('tickets.messages.store');
+        });
     });
 });
