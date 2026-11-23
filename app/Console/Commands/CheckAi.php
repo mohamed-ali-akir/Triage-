@@ -21,6 +21,7 @@ class CheckAi extends Command
      */
     private const HINTS = [
         'not_configured' => 'La clé est absente : renseignez ANTHROPIC_API_KEY dans .env.',
+        'insecure_transport' => 'Ollama est sur une autre machine en HTTP : les tickets circuleraient en clair. Utilisez une adresse en https://, ou OLLAMA_ALLOW_INSECURE=true si le réseau est déjà chiffré.',
         'authentication' => 'La clé est refusée : vérifiez ANTHROPIC_API_KEY (clé révoquée, mal copiée, ou d\'un autre compte).',
         'http_400' => 'La requête est refusée : vérifiez ANTHROPIC_MODEL. Avec un ancien modèle, essayez ANTHROPIC_REFUSAL_FALLBACK=false et videz ANTHROPIC_EFFORT.',
         'http_404' => 'Le modèle est introuvable : vérifiez ANTHROPIC_MODEL (ou OLLAMA_MODEL, puis « ollama pull »).',
