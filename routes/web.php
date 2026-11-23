@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\KbArticleController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\AiSuggestionController;
 use App\Http\Controllers\HomeController;
@@ -36,5 +37,6 @@ Route::middleware('auth')->group(function () {
     Route::prefix('admin')->name('admin.')->middleware('can:access-admin')->group(function () {
         Route::resource('users', UserController::class)->except(['show', 'destroy']);
         Route::resource('categories', CategoryController::class)->except(['show']);
+        Route::resource('kb-articles', KbArticleController::class)->except(['show']);
     });
 });

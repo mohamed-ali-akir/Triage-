@@ -15,6 +15,7 @@
             @can('access-admin')
                 <x-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')">Comptes</x-nav-link>
                 <x-nav-link :href="route('admin.categories.index')" :active="request()->routeIs('admin.categories.*')">Catégories</x-nav-link>
+                <x-nav-link :href="route('admin.kb-articles.index')" :active="request()->routeIs('admin.kb-articles.*')">Articles</x-nav-link>
             @endcan
         </nav>
 
