@@ -133,6 +133,15 @@ ANTHROPIC_API_KEY=votre-clé
 | `AI_RATE_LIMIT_PER_MINUTE` | Nombre maximal d'appels à l'IA par minute | `20` |
 | `AI_LOW_CONFIDENCE_THRESHOLD` | Seuil du badge « Confiance faible » | `0.7` |
 
+Pour vérifier la clé, le modèle et la connexion en un seul appel :
+
+```bash
+php artisan triage:ai-check
+```
+
+La commande envoie un ticket d'essai et affiche le classement obtenu, la durée et le coût, ou
+bien la cause de l'échec et la variable à corriger.
+
 Ce qui est garanti, IA activée ou non :
 
 - Les données personnelles (e-mails, téléphones, noms, adresses IP, mots de passe) sont

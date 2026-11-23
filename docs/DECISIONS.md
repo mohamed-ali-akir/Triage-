@@ -419,3 +419,16 @@ de `try/catch`, et un jeton refusé par le serveur ramène automatiquement à l'
 Le mot de passe sert une fois, pour obtenir le jeton, puis il est oublié. Le jeton est dans le
 stockage privé de l'application, exclu des sauvegardes Android. Le HTTP non chiffré n'est
 accepté que dans la version de débogage ; une version publiée exige HTTPS.
+
+### D63 — Un test de bout en bout sur émulateur
+
+Un test instrumenté pilote la vraie application sur un émulateur Android : connexion, liste,
+ouverture d'un ticket, passage à « Résolu ». Le serveur est un vrai Triage avec les données de
+démonstration, lancé dans le même job de CI. C'est le seul test qui traverse toute la chaîne :
+écran Compose, ViewModel, Retrofit, API Laravel, Policy, machine à états, base de données.
+
+### D64 — Une commande pour vérifier la configuration de l'IA
+
+`php artisan triage:ai-check` envoie un seul ticket d'essai et affiche le résultat, ou la cause
+de l'échec avec la variable de `.env` à corriger. Une clé mal copiée ou un modèle mal nommé se
+diagnostique ainsi en dix secondes, sans créer de ticket ni fouiller le journal.
