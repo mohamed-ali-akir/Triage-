@@ -70,6 +70,8 @@ test('the AI is evaluated on the same tickets and compared with the baseline', f
         // 2 categories right out of 3, 2 priorities right out of 3, 1 ticket fully right.
         ->toContain('| IA — fake / fake | 67 % ± 53 | 67 % ± 53 | 100 % | 33 % ± 53 |')
         ->toContain('## Lecture')
+        // On three tickets no gap can be significant, and the report says so.
+        ->toContain('il ne permet pas de conclure')
         ->toContain('### Fiabilité du score de confiance')
         ->toContain('| Au-dessus du seuil | 1 / 2 entièrement justes (50 %) |')
         ->toContain('| En dessous du seuil | 0 / 1 entièrement justes (0 %) |')

@@ -91,6 +91,14 @@ test('the margin of error follows the usual formula', function () {
         ->and(MethodResult::marginOfError(0.5, 0))->toBe(0.0);
 });
 
+test('the margin of a difference combines the two margins', function () {
+    // 80 % and 62 % on 60 tickets: margins of about 10.1 and 12.3 points,
+    // so sqrt(10.1² + 12.3²) ≈ 15.9 points for their difference.
+    expect(round(MethodResult::marginOfDifference(0.8, 60, 0.62, 60), 3))->toBe(0.159)
+        // It is always larger than each margin taken alone.
+        ->and(MethodResult::marginOfDifference(0.8, 60, 0.62, 60))->toBeGreaterThan(MethodResult::marginOfError(0.62, 60));
+});
+
 test('an empty result does not divide by zero', function () {
     $empty = new MethodResult('Vide', []);
 

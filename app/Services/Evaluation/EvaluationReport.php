@@ -76,19 +76,22 @@ class EvaluationReport
 
         foreach ($aiResults as $result) {
             $gap = $result->categoryAccuracy() - $baseline->categoryAccuracy();
-            $margin = max(
-                MethodResult::marginOfError($result->categoryAccuracy(), $result->count()),
-                MethodResult::marginOfError($baseline->categoryAccuracy(), $baseline->count()),
+            $margin = MethodResult::marginOfDifference(
+                $result->categoryAccuracy(),
+                $result->count(),
+                $baseline->categoryAccuracy(),
+                $baseline->count(),
             );
 
             $verdict = abs($gap) > $margin
-                ? 'cet écart dépasse la marge d\'erreur : il est significatif.'
-                : 'cet écart est inférieur à la marge d\'erreur : il ne permet pas de conclure.';
+                ? 'cet écart dépasse la marge d\'erreur de la différence : il est significatif.'
+                : 'cet écart est inférieur à la marge d\'erreur de la différence : il ne permet pas de conclure.';
 
             $lines[] = sprintf(
-                '- **%s** : %+d points sur la catégorie par rapport à la référence par mots-clés ; %s',
+                '- **%s** : %+d points sur la catégorie par rapport à la référence par mots-clés (marge d\'erreur de la différence : ± %d points) ; %s',
                 $result->label,
                 (int) round($gap * 100),
+                (int) round($margin * 100),
                 $verdict,
             );
         }

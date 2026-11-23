@@ -7,6 +7,7 @@ return [
         'reply' => 'Réponses suggérées',
         'duplicates' => 'Détection des doublons',
         'evaluation' => 'Évaluation',
+        'check' => 'Vérification',
     ],
 
     // Short error codes written to the AI log.

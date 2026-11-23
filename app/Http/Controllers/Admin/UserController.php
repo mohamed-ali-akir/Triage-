@@ -57,6 +57,11 @@ class UserController extends Controller
 
         $user->update($data);
 
+        // A deactivated account must lose its mobile access at once.
+        if (! $user->is_active) {
+            $user->tokens()->delete();
+        }
+
         return redirect()->route('admin.users.index')
             ->with('success', "Le compte de {$user->name} a été mis à jour.");
     }

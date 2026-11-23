@@ -71,6 +71,16 @@ final class MethodResult
     }
 
     /**
+     * Margin of error of the difference between two measured proportions: the two
+     * uncertainties add up (square root of the sum of the squares). A gap between
+     * two methods means something only when it is larger than this.
+     */
+    public static function marginOfDifference(float $first, int $firstCount, float $second, int $secondCount): float
+    {
+        return sqrt(self::marginOfError($first, $firstCount) ** 2 + self::marginOfError($second, $secondCount) ** 2);
+    }
+
+    /**
      * Category accuracy for each expected category.
      *
      * @return array<string, array{correct: int, total: int}>

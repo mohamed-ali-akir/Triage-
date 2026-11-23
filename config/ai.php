@@ -54,8 +54,9 @@ return [
         // Reasoning depth: low is enough to classify a ticket. Leave empty for
         // older models that do not accept this parameter.
         'effort' => env('ANTHROPIC_EFFORT', 'low'),
-        // If the model declines a request, let the API retry it on the fallback
-        // model it recommends. Set to false for models without this feature (Haiku).
+        // If the model declines a request, let the API retry it on the fallback model it
+        // recommends. It has no effect with Haiku models, which have no fallback; set it
+        // to false for older models that do not accept the parameter.
         'refusal_fallback' => (bool) env('ANTHROPIC_REFUSAL_FALLBACK', true),
     ],
 

@@ -15,7 +15,8 @@ une priorité et une réponse ; **un technicien valide toujours avant toute acti
 | 2 | Tri par IA : classification, anonymisation, validation par le technicien, mode dégradé | Terminée |
 | 3 | Base de connaissances, réponses suggérées avec sources, détection des doublons | Terminée |
 | 4 | Évaluation de l'IA, modèle local, tableau de bord, délais cibles, purge RGPD | Terminée |
-| 5 | API REST et application mobile du technicien | À venir |
+| 5a | API REST du technicien (Sanctum) | Terminée |
+| 5b | Application Android du technicien (dossier `mobile/`) | Terminée, testée sur émulateur par la CI |
 
 ## Documentation
 
@@ -23,6 +24,8 @@ une priorité et une réponse ; **un technicien valide toujours avant toute acti
 - [Modèle de données et diagrammes](docs/MODELE_DONNEES.md)
 - [Journal des décisions techniques](docs/DECISIONS.md)
 - [Protection des données personnelles (RGPD)](docs/RGPD.md)
+- [API REST de l'application mobile](docs/API.md)
+- [Application Android du technicien](mobile/README.md)
 - [Évaluations du tri par IA](docs/evaluations/README.md)
 
 ## Prérequis
@@ -125,10 +128,19 @@ ANTHROPIC_API_KEY=votre-clé
 | `ANTHROPIC_API_KEY` | Clé de l'API Claude. Ne la commitez jamais | vide |
 | `ANTHROPIC_MODEL` | Modèle Claude utilisé | `claude-opus-5-5` |
 | `ANTHROPIC_EFFORT` | Profondeur de raisonnement (`low`, `medium`, `high`) | `low` |
-| `ANTHROPIC_REFUSAL_FALLBACK` | Si le modèle refuse une requête, l'API la rejoue sur un modèle de repli. À passer à `false` avec un modèle Haiku | `true` |
+| `ANTHROPIC_REFUSAL_FALLBACK` | Si le modèle refuse une requête, l'API la rejoue sur le modèle de repli qu'elle recommande. Sans effet avec un modèle Haiku, qui n'a pas de repli | `true` |
 | `AI_TIMEOUT` | Délai maximal d'une réponse, en secondes | `30` |
 | `AI_RATE_LIMIT_PER_MINUTE` | Nombre maximal d'appels à l'IA par minute | `20` |
 | `AI_LOW_CONFIDENCE_THRESHOLD` | Seuil du badge « Confiance faible » | `0.7` |
+
+Pour vérifier la clé, le modèle et la connexion en un seul appel :
+
+```bash
+php artisan triage:ai-check
+```
+
+La commande envoie un ticket d'essai et affiche le classement obtenu, la durée et le coût, ou
+bien la cause de l'échec et la variable à corriger.
 
 Ce qui est garanti, IA activée ou non :
 
@@ -170,6 +182,11 @@ Le rapport donne la précision avec sa marge d'erreur, la précision par catégo
 de confusion, le temps moyen, le coût estimé et la fiabilité du score de confiance. Détails et
 limites : [docs/evaluations/README.md](docs/evaluations/README.md).
 
+Premier résultat réel, avec deux petits modèles locaux : 60 % et 62 % sur la catégorie, contre
+78 % pour la référence par mots-clés. Après la relecture des 60 étiquettes par l'étudiant (trois
+corrections), ces chiffres deviennent 63 %, 62 % et 82 % : la conclusion ne change pas. L'évaluation avec Claude n'a pas été faite, faute de clé
+d'API : c'est une limite assumée du projet, décrite dans le même document.
+
 ### Modèle local avec Ollama
 
 Avec `AI_PROVIDER=ollama`, le modèle tourne sur votre machine : aucune donnée ne sort et un
@@ -183,6 +200,13 @@ moyens, tickets en retard par rapport aux délais cibles (`config/tickets.php`),
 techniciens sur les suggestions de l'IA, consommation de l'IA par jour.
 
 ![Tableau de bord](docs/captures/tableau-de-bord.png)
+
+## Application mobile
+
+Le dossier `mobile/` contient l'application Android du technicien (Kotlin, Jetpack Compose,
+Retrofit) : connexion, tickets assignés, détail, changement de statut, réponse. Elle utilise
+l'API REST décrite dans [docs/API.md](docs/API.md). Installation et lancement :
+[mobile/README.md](mobile/README.md).
 
 ## Données personnelles
 
@@ -225,7 +249,8 @@ composer quality     # les trois à la suite
 ```
 
 La CI GitHub Actions exécute les mêmes contrôles à chaque pull request : tests sur SQLite
-(PHP 8.3 et 8.4) et sur MySQL, PHPStan, Pint, `composer audit` et compilation des assets.
+(PHP 8.3 et 8.4) et sur MySQL, PHPStan, Pint, `composer audit`, compilation des assets, tests et
+compilation de l'application mobile.
 
 ## Organisation du code
 

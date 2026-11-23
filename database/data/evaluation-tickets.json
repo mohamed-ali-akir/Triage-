@@ -1,6 +1,6 @@
 {
     "description": "Jeu d'évaluation du tri par IA : 60 tickets réalistes, étiquetés à la main (catégorie et priorité attendues).",
-    "labelled_by": "À relire et valider par l'étudiant avant l'oral : une étiquette discutable se corrige ici.",
+    "labelled_by": "Les 60 étiquettes ont été relues et validées par l'étudiant le 23/11/2026. Trois ont été corrigées (n° 53, 55 et 59 : autre devient materiel) ; le détail est dans docs/evaluations/README.md.",
     "tickets": [
         {
             "id": 1,
@@ -370,7 +370,7 @@
             "id": 53,
             "title": "Commande d'un téléphone portable professionnel",
             "description": "Je prends un poste de commercial itinérant le mois prochain. Il me faudra un téléphone portable professionnel avec un forfait.",
-            "expected_category": "autre",
+            "expected_category": "materiel",
             "expected_priority": "low"
         },
         {
@@ -384,7 +384,7 @@
             "id": 55,
             "title": "Déménagement de quatre postes vendredi",
             "description": "Le service achats change de bureau vendredi. Il faudra déplacer et rebrancher quatre postes complets, avec leurs écrans et leurs téléphones.",
-            "expected_category": "autre",
+            "expected_category": "materiel",
             "expected_priority": "normal"
         },
         {
@@ -412,7 +412,7 @@
             "id": 59,
             "title": "Devis pour trois ordinateurs portables",
             "description": "Nous prévoyons trois recrutements au second semestre. Pouvez-vous nous transmettre un devis pour trois ordinateurs portables standards ?",
-            "expected_category": "autre",
+            "expected_category": "materiel",
             "expected_priority": "low"
         },
         {

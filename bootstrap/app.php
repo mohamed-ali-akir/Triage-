@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
+        api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
@@ -26,7 +27,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // A forbidden transition is a normal business error, not a crash:
         // explain it to the user instead of showing an error 500.
         $exceptions->render(function (TicketWorkflowException $exception, Request $request) {
-            if ($request->expectsJson()) {
+            if ($request->is('api/*') || $request->expectsJson()) {
                 return response()->json(['message' => $exception->getMessage()], 422);
             }
 

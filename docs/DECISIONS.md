@@ -306,9 +306,10 @@ méthode de référence sans intelligence (des listes de mots-clés). Sans cette
 ### D45 — Afficher la marge d'erreur
 
 Avec 60 tickets et environ 80 % de précision, la marge d'erreur à 95 % est de ± 10 points
-(formule : 1,96 × √(p(1−p)/n)). Le rapport l'affiche à côté de chaque pourcentage et dit si
-l'écart entre l'IA et la référence est significatif. C'est une limite assumée : mieux vaut un
-chiffre honnête avec sa marge qu'un chiffre précis en apparence.
+(formule : 1,96 × √(p(1−p)/n)). Le rapport l'affiche à côté de chaque pourcentage. Pour dire
+si l'écart entre l'IA et la référence est significatif, il le compare à la marge d'erreur de
+la différence, qui combine les deux incertitudes (racine de la somme des carrés) : environ
+± 16 points ici. Mieux vaut un chiffre honnête avec sa marge qu'un chiffre précis en apparence.
 
 ### D46 — Vérifier que le score de confiance sert à quelque chose
 
@@ -333,7 +334,9 @@ sont donc pas faussées par une évaluation.
 
 `OllamaProvider` implémente `AiProvider` comme `AnthropicProvider` : aucun autre fichier ne
 change. Un modèle local ne coûte rien et ne fait sortir aucune donnée, mais il est plus lent
-et souvent moins précis. `triage:evaluate --provider=ollama` donne les chiffres pour décider.
+et moins précis. La première évaluation réelle l'a mesuré : `llama3.2:3b` et `qwen2.5:1.5b`
+obtiennent 60 % et 62 % sur la catégorie, contre 78 % pour la référence par mots-clés
+(`docs/evaluations/`). Un petit modèle local ne suffit donc pas pour ce tri.
 
 ### D50 — Délais cibles en heures calendaires
 
@@ -361,3 +364,93 @@ Vingt-quatre mois après la clôture, une commande planifiée efface le titre, l
 messages et les brouillons de l'IA. La catégorie, la priorité, les dates et l'historique restent :
 ils alimentent les statistiques et n'identifient plus personne. Le droit à l'effacement suit la
 même logique avec `triage:anonymize-user`, qui transforme le compte en coquille anonyme.
+
+## Phase 5 — API et application mobile
+
+### D54 — Jetons Sanctum pour le mobile
+
+Une application mobile ne peut pas utiliser la session par cookie du site web. Sanctum délivre
+un jeton par appareil : le téléphone ne garde jamais le mot de passe, un jeton se révoque sans
+changer de mot de passe, et il expire au bout de 30 jours. C'est la solution officielle de
+Laravel, bien plus simple qu'OAuth pour une application interne.
+
+### D55 — L'API réutilise les règles du web
+
+Les contrôleurs d'API appellent les mêmes Policies, le même `TicketWorkflow` et la même action
+`PostTicketMessage` que le site. Il n'existe donc qu'une seule définition de « qui a le droit »
+et de « quelle transition est valide ». C'est ce que préparait la décision D10.
+
+### D56 — Le serveur dit à l'application ce qui est permis
+
+Le détail d'un ticket contient `allowed_statuses` : les statuts que ce technicien peut choisir
+maintenant. L'application affiche un bouton par entrée. La machine à états n'est pas recopiée
+en Kotlin : si une règle change côté serveur, l'application suit sans mise à jour.
+
+### D57 — API Resources : ne renvoyer que le nécessaire
+
+Les classes `JsonResource` décrivent explicitement chaque champ renvoyé. Pour les autres
+personnes, seuls l'identifiant et le nom sortent, jamais l'adresse e-mail ni un champ interne.
+Renvoyer un modèle Eloquent brut exposerait toute nouvelle colonne par accident.
+
+### D58 — Une API versionnée et réservée aux techniciens
+
+Les routes sont préfixées par `/api/v1` : une future version incompatible pourra cohabiter avec
+l'application déjà installée sur les téléphones. La Gate `use-mobile-api` ferme toute l'API aux
+autres rôles, et la connexion est limitée à 5 tentatives par minute.
+
+### D59 — Application mobile en deux modules
+
+`core` est du Kotlin pur : l'interface Retrofit, les objets JSON, les dépôts de données et la
+traduction des erreurs. `app` contient ce qui dépend d'Android : écrans Compose, ViewModels,
+stockage du jeton. Tout ce qui parle au serveur se teste ainsi sur la JVM en quelques secondes,
+sans émulateur, y compris par un test qui fait un parcours complet contre un vrai serveur Triage.
+
+### D60 — Un état immuable par écran
+
+Chaque écran a un `ViewModel` qui expose un `StateFlow` d'un état immuable (`data class`).
+L'écran Compose affiche cet état et renvoie les actions de l'utilisateur. La logique n'est pas
+dans l'interface : c'est le schéma recommandé par Google (flux de données unidirectionnel).
+
+### D61 — Les erreurs sont des valeurs
+
+Un appel à l'API renvoie un `ApiResult` : une valeur, ou un `ApiFailure` typé (non connecté,
+interdit, introuvable, invalide, réseau, serveur) avec un message en français. Aucun écran n'a
+de `try/catch`, et un jeton refusé par le serveur ramène automatiquement à l'écran de connexion.
+
+### D62 — Seul le jeton est stocké sur le téléphone
+
+Le mot de passe sert une fois, pour obtenir le jeton, puis il est oublié. Le jeton est dans le
+stockage privé de l'application, exclu des sauvegardes Android. Le HTTP non chiffré n'est
+accepté que dans la version de débogage ; une version publiée exige HTTPS.
+
+### D63 — Un test de bout en bout sur émulateur
+
+Un test instrumenté pilote la vraie application sur un émulateur Android : connexion, liste,
+ouverture d'un ticket, passage à « Résolu ». Le serveur est un vrai Triage avec les données de
+démonstration, lancé dans le même job de CI. C'est le seul test qui traverse toute la chaîne :
+écran Compose, ViewModel, Retrofit, API Laravel, Policy, machine à états, base de données.
+Il enregistre aussi une capture d'écran par étape, publiée par la CI : les images de la
+documentation viennent de là, donc elles montrent l'application telle qu'elle fonctionne.
+
+### D64 — Une commande pour vérifier la configuration de l'IA
+
+`php artisan triage:ai-check` envoie un seul ticket d'essai et affiche le résultat, ou la cause
+de l'échec avec la variable de `.env` à corriger. Une clé mal copiée ou un modèle mal nommé se
+diagnostique ainsi en dix secondes, sans créer de ticket ni fouiller le journal.
+
+### D65 — Pas d'évaluation avec Claude : une limite assumée
+
+Le projet n'a pas de clé d'API Anthropic, donc l'évaluation avec Claude n'a pas été faite et
+`AnthropicProvider` n'a jamais reçu de réponse acceptée par l'API (tests avec `Http::fake()`,
+format contrôlé contre la documentation, refus d'une clé factice vérifié). Plutôt que d'inventer
+des chiffres, la documentation le dit : la seule évaluation réelle est celle des modèles locaux.
+L'interface `AiProvider` permet de la refaire avec Claude plus tard, sans modifier le code.
+
+### D66 — Trois étiquettes corrigées à la relecture
+
+L'étudiant a relu les 60 étiquettes : d'abord les huit que les trois méthodes contredisaient
+(six gardées), puis les 52 autres. Trois sont corrigées (n° 53, 55 et 59 : `autre` devient
+`materiel`) selon une seule règle : une demande d'équipement va dans la catégorie de
+l'équipement, comme le ticket 5. Corriger dans le sens des méthodes fait monter leur score
+(référence : 78 % puis 82 %), donc le rapport d'origine est conservé et les deux séries de
+chiffres sont publiées. Le jeu n'est plus équilibré (13 `materiel`, 7 `autre`).
