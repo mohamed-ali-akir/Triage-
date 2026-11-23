@@ -7,6 +7,7 @@
         <nav class="flex flex-1 flex-wrap items-center gap-x-1 gap-y-1 text-sm" aria-label="Navigation principale">
             @can('view-queue')
                 <x-nav-link :href="route('queue.index')" :active="request()->routeIs('queue.*')">File des tickets</x-nav-link>
+                <x-nav-link :href="route('kb.index')" :active="request()->routeIs('kb.*')">Base de connaissances</x-nav-link>
             @endcan
 
             <x-nav-link :href="route('tickets.index')" :active="request()->routeIs('tickets.index')">Mes tickets</x-nav-link>

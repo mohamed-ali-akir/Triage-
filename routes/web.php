@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\KbArticleController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\AiSuggestionController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\KbController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TicketAssignmentController;
@@ -29,6 +30,12 @@ Route::middleware('auth')->group(function () {
 
     // The technician queue is a Livewire component embedded in a plain Blade view.
     Route::view('/queue', 'queue.index')->middleware('can:view-queue')->name('queue.index');
+
+    // The knowledge base, read-only, for the support staff.
+    Route::middleware('can:view-queue')->group(function () {
+        Route::get('/kb', [KbController::class, 'index'])->name('kb.index');
+        Route::get('/kb/{kbArticle}', [KbController::class, 'show'])->name('kb.show');
+    });
 
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
