@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Tickets\CreateTicket;
+use App\Actions\Tickets\StoreTicketAttachments;
 use App\Enums\TicketPriority;
 use App\Http\Requests\StoreTicketRequest;
 use App\Models\Category;
@@ -36,14 +37,16 @@ class TicketController extends Controller
         return view('tickets.create');
     }
 
-    public function store(StoreTicketRequest $request, CreateTicket $createTicket): RedirectResponse
+    public function store(StoreTicketRequest $request, CreateTicket $createTicket, StoreTicketAttachments $storeAttachments): RedirectResponse
     {
         Gate::authorize('create', Ticket::class);
 
         /** @var array{title: string, description: string} $data */
-        $data = $request->validated();
+        $data = $request->safe()->only(['title', 'description']);
 
         $ticket = $createTicket->handle($request->user(), $data);
+
+        $storeAttachments->handle($ticket, $request->user(), $request->file('attachments', []));
 
         return redirect()->route('tickets.show', $ticket)
             ->with('success', 'Votre ticket a été enregistré. Un technicien va le prendre en charge.');
@@ -53,7 +56,7 @@ class TicketController extends Controller
     {
         Gate::authorize('view', $ticket);
 
-        $ticket->load(['requester.department', 'assignee', 'category', 'events.user', 'pendingSuggestion.category', 'duplicateOf', 'duplicatedBy']);
+        $ticket->load(['requester.department', 'assignee', 'category', 'events.user', 'pendingSuggestion.category', 'duplicateOf', 'duplicatedBy', 'attachments.uploader']);
 
         return view('tickets.show', [
             'ticket' => $ticket,

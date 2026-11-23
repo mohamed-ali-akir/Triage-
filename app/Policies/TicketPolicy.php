@@ -51,6 +51,14 @@ class TicketPolicy
     }
 
     /**
+     * The requester and the technicians join files to an open ticket.
+     */
+    public function attach(User $user, Ticket $ticket): bool
+    {
+        return $this->reply($user, $ticket);
+    }
+
+    /**
      * Internal notes are written by technicians and never shown to the requester.
      */
     public function writeInternalNote(User $user, Ticket $ticket): bool

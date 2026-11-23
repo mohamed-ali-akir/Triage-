@@ -33,7 +33,9 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'serve' => true,
+            // No signed download route: private files only leave through a controller
+            // that checks who is asking (attachments of the tickets).
+            'serve' => false,
             'throw' => false,
             'report' => false,
         ],

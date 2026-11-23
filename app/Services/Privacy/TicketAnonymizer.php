@@ -7,6 +7,7 @@ use App\Models\Ticket;
 use App\Models\TicketMessage;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 /**
@@ -30,6 +31,7 @@ class TicketAnonymizer
     {
         DB::transaction(function () use ($ticket): void {
             $ticket->messages()->delete();
+            $this->deleteAttachments($ticket);
             $ticket->suggestions()->update(['reply' => null]);
 
             $ticket->forceFill([
@@ -77,6 +79,19 @@ class TicketAnonymizer
 
             return $tickets->count();
         });
+    }
+
+    /**
+     * A screenshot can show anything: the files are deleted from the disk, with their records.
+     */
+    private function deleteAttachments(Ticket $ticket): void
+    {
+        $disk = Storage::disk(config('tickets.attachments.disk'));
+
+        foreach ($ticket->attachments as $attachment) {
+            $disk->delete($attachment->path);
+            $attachment->delete();
+        }
     }
 
     /**

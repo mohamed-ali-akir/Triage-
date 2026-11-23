@@ -81,6 +81,14 @@ class Ticket extends Model
     }
 
     /**
+     * @return HasMany<TicketAttachment, $this>
+     */
+    public function attachments(): HasMany
+    {
+        return $this->hasMany(TicketAttachment::class)->oldest('id');
+    }
+
+    /**
      * The discussion thread, oldest message first.
      *
      * @return HasMany<TicketMessage, $this>
