@@ -77,10 +77,24 @@ Ce que ces chiffres montrent :
   `llama3.2:3b`, qui range les pannes de réseau dans « accès et comptes ».
 - **Rien n'a coûté un centime ni quitté la machine**, au prix de 2 à 5 secondes par ticket.
 
-Ce que ces chiffres ne disent pas : ce que vaut un grand modèle comme Claude sur ce jeu de test.
-Cette évaluation demande une clé d'API et reste à faire ; c'est elle qui dira si l'IA du cloud
-justifie son coût et l'envoi de données à un tiers.
+## Limite assumée : pas d'évaluation avec Claude
+
+Ces chiffres ne disent pas ce que vaut un grand modèle comme Claude sur ce jeu de test. Cette
+évaluation **n'a pas été faite** : le projet ne dispose pas de clé d'API Anthropic (l'API est
+payante). Trois conséquences, à dire telles quelles à l'oral :
+
+- La seule évaluation réelle du projet est celle des deux modèles locaux ci-dessus.
+- `AnthropicProvider` n'a jamais reçu de réponse acceptée par l'API. Il est couvert par des
+  tests avec `Http::fake()`, le format de ses requêtes a été contrôlé contre la documentation
+  officielle, et une vraie requête avec une clé factice a bien été refusée et traduite en
+  « clé refusée ». Il reste donc un risque qu'un détail du format soit à corriger au premier
+  vrai appel.
+- La question « l'IA du cloud justifie-t-elle son coût et l'envoi de données à un tiers ? »
+  reste ouverte. La conclusion mesurée est plus modeste : un petit modèle local ne suffit pas.
+
+Le jour où une clé est disponible, deux commandes suffisent, sans toucher au code :
 
 ```bash
+php artisan triage:ai-check
 php artisan triage:evaluate --model=claude-opus-5-5 --model=claude-haiku-5-5
 ```

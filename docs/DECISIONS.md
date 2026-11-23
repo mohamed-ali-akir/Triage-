@@ -435,3 +435,11 @@ démonstration, lancé dans le même job de CI. C'est le seul test qui traverse 
 `php artisan triage:ai-check` envoie un seul ticket d'essai et affiche le résultat, ou la cause
 de l'échec avec la variable de `.env` à corriger. Une clé mal copiée ou un modèle mal nommé se
 diagnostique ainsi en dix secondes, sans créer de ticket ni fouiller le journal.
+
+### D65 — Pas d'évaluation avec Claude : une limite assumée
+
+Le projet n'a pas de clé d'API Anthropic, donc l'évaluation avec Claude n'a pas été faite et
+`AnthropicProvider` n'a jamais reçu de réponse acceptée par l'API (tests avec `Http::fake()`,
+format contrôlé contre la documentation, refus d'une clé factice vérifié). Plutôt que d'inventer
+des chiffres, la documentation le dit : la seule évaluation réelle est celle des modèles locaux.
+L'interface `AiProvider` permet de la refaire avec Claude plus tard, sans modifier le code.
