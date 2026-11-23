@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Category;
+use App\Models\Ticket;
 use App\Models\User;
 
 test('only an administrator can manage categories', function (string $state) {
@@ -83,4 +84,14 @@ test('an administrator can delete an unused category', function () {
         ->assertRedirect('/admin/categories');
 
     $this->assertModelMissing($category);
+});
+
+test('a category used by a ticket cannot be deleted', function () {
+    $ticket = Ticket::factory()->triaged()->create();
+
+    $this->actingAs(User::factory()->admin()->create())
+        ->delete("/admin/categories/{$ticket->category_id}")
+        ->assertSessionHas('error');
+
+    $this->assertModelExists($ticket->category);
 });

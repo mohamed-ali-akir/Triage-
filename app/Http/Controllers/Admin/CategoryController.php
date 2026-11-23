@@ -52,6 +52,11 @@ class CategoryController extends Controller
 
     public function destroy(Category $category): RedirectResponse
     {
+        // Deleting a category in use would leave tickets without a category: deactivate it instead.
+        if ($category->tickets()->exists()) {
+            return back()->with('error', 'Cette catégorie est utilisée par des tickets. Désactivez-la plutôt que de la supprimer.');
+        }
+
         $category->delete();
 
         return redirect()->route('admin.categories.index')->with('success', 'La catégorie a été supprimée.');

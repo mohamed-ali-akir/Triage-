@@ -16,6 +16,6 @@ class HomeController extends Controller
             return redirect()->route('admin.users.index');
         }
 
-        return redirect()->route('profile.show');
+        return redirect()->route('tickets.index');
     }
 }

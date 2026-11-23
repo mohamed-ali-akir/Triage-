@@ -5,6 +5,9 @@
         </a>
 
         <nav class="flex flex-1 flex-wrap items-center gap-x-1 gap-y-1 text-sm" aria-label="Navigation principale">
+            <x-nav-link :href="route('tickets.index')" :active="request()->routeIs('tickets.index')">Mes tickets</x-nav-link>
+            <x-nav-link :href="route('tickets.create')" :active="request()->routeIs('tickets.create')">Nouveau ticket</x-nav-link>
+
             @can('access-admin')
                 <x-nav-link :href="route('admin.users.index')" :active="request()->routeIs('admin.users.*')">Comptes</x-nav-link>
                 <x-nav-link :href="route('admin.categories.index')" :active="request()->routeIs('admin.categories.*')">Catégories</x-nav-link>
