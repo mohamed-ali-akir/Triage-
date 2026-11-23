@@ -31,7 +31,7 @@ test('every expected category exists in the reference data', function () {
 test('the evaluation set has enough tickets in each category and covers every priority', function () {
     $cases = collect((new EvaluationDataset)->load());
 
-    expect($cases->countBy('expectedCategory')->min())->toBeGreaterThanOrEqual(8)
+    expect($cases->countBy('expectedCategory')->min())->toBeGreaterThanOrEqual(5)
         ->and($cases->map(fn (EvaluationCase $case) => $case->expectedPriority->value)->unique()->sort()->values()->all())
         ->toBe(['critical', 'high', 'low', 'normal']);
 });

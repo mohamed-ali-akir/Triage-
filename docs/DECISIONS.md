@@ -446,11 +446,11 @@ format contrôlé contre la documentation, refus d'une clé factice vérifié). 
 des chiffres, la documentation le dit : la seule évaluation réelle est celle des modèles locaux.
 L'interface `AiProvider` permet de la refaire avec Claude plus tard, sans modifier le code.
 
-### D66 — Deux étiquettes corrigées après la première évaluation
+### D66 — Trois étiquettes corrigées à la relecture
 
-L'étudiant a relu les huit tickets que les trois méthodes contredisaient : six étiquettes sont
-gardées, deux sont corrigées (n° 53 et 55, `autre` devient `materiel`, par cohérence avec le
-ticket 5). Corriger dans le sens des méthodes fait monter leur score (référence : 78 % puis
-82 %), donc le rapport d'origine est conservé et les deux séries de chiffres sont publiées.
-Le jeu n'est plus parfaitement équilibré (12 `materiel`, 8 `autre`) : c'est le prix de la cohérence.
-
+L'étudiant a relu les 60 étiquettes : d'abord les huit que les trois méthodes contredisaient
+(six gardées), puis les 52 autres. Trois sont corrigées (n° 53, 55 et 59 : `autre` devient
+`materiel`) selon une seule règle : une demande d'équipement va dans la catégorie de
+l'équipement, comme le ticket 5. Corriger dans le sens des méthodes fait monter leur score
+(référence : 78 % puis 82 %), donc le rapport d'origine est conservé et les deux séries de
+chiffres sont publiées. Le jeu n'est plus équilibré (13 `materiel`, 7 `autre`).

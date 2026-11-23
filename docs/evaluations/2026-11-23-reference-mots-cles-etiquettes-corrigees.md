@@ -1,6 +1,6 @@
 # Évaluation du tri des tickets
 
-- Date : 23/11/2026 à 13:37
+- Date : 23/11/2026 à 14:03
 - Jeu de test : 60 tickets étiquetés à la main (`database/data/evaluation-tickets.json`)
 - Commande : `php artisan triage:evaluate`
 
@@ -20,9 +20,9 @@ plus petit que cette marge entre deux méthodes ne prouve rien.
 | Catégorie attendue | Bonnes réponses | Précision |
 |---|---|---|
 | `acces-comptes` | 5 / 10 | 50 % |
-| `autre` | 5 / 8 | 63 % |
+| `autre` | 5 / 7 | 71 % |
 | `logiciel` | 10 / 10 | 100 % |
-| `materiel` | 12 / 12 | 100 % |
+| `materiel` | 12 / 13 | 92 % |
 | `messagerie` | 9 / 10 | 90 % |
 | `reseau` | 8 / 10 | 80 % |
 
@@ -33,9 +33,9 @@ En ligne la catégorie attendue, en colonne la catégorie proposée.
 | attendue \ proposée | `acces-comptes` | `autre` | `logiciel` | `materiel` | `messagerie` | `reseau` |
 |---|---|---|---|---|---|---|
 | `acces-comptes` | **5** | · | · | · | 5 | · |
-| `autre` | · | **5** | 1 | 1 | · | 1 |
+| `autre` | · | **5** | 1 | 1 | · | · |
 | `logiciel` | · | · | **10** | · | · | · |
-| `materiel` | · | · | · | **12** | · | · |
+| `materiel` | · | · | · | **12** | · | 1 |
 | `messagerie` | · | 1 | · | · | **9** | · |
 | `reseau` | 2 | · | · | · | · | **8** |
 
@@ -70,5 +70,5 @@ En ligne la catégorie attendue, en colonne la catégorie proposée.
 | 52 | Demande de formation Excel | `autre` / Basse | `logiciel` / Basse |
 | 53 | Commande d'un téléphone portable professionnel | `materiel` / Basse | `materiel` / Normale |
 | 56 | Où trouver le modèle de note de frais ? | `autre` / Basse | `autre` / Normale |
-| 59 | Devis pour trois ordinateurs portables | `autre` / Basse | `reseau` / Basse |
+| 59 | Devis pour trois ordinateurs portables | `materiel` / Basse | `reseau` / Basse |
 

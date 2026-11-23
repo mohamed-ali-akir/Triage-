@@ -183,7 +183,8 @@ de confusion, le temps moyen, le coût estimé et la fiabilité du score de conf
 limites : [docs/evaluations/README.md](docs/evaluations/README.md).
 
 Premier résultat réel, avec deux petits modèles locaux : 60 % et 62 % sur la catégorie, contre
-78 % pour la référence par mots-clés. L'évaluation avec Claude n'a pas été faite, faute de clé
+78 % pour la référence par mots-clés. Après la relecture des 60 étiquettes par l'étudiant (trois
+corrections), ces chiffres deviennent 63 %, 62 % et 82 % : la conclusion ne change pas. L'évaluation avec Claude n'a pas été faite, faute de clé
 d'API : c'est une limite assumée du projet, décrite dans le même document.
 
 ### Modèle local avec Ollama

@@ -1,6 +1,6 @@
 {
     "description": "Jeu d'évaluation du tri par IA : 60 tickets réalistes, étiquetés à la main (catégorie et priorité attendues).",
-    "labelled_by": "Les huit étiquettes les plus contestées ont été relues et tranchées par l'étudiant le 23/11/2026 (deux corrigées : n° 53 et 55). Les 52 autres restent à relire avant l'oral : une étiquette discutable se corrige ici.",
+    "labelled_by": "Les 60 étiquettes ont été relues et validées par l'étudiant le 23/11/2026. Trois ont été corrigées (n° 53, 55 et 59 : autre devient materiel) ; le détail est dans docs/evaluations/README.md.",
     "tickets": [
         {
             "id": 1,
@@ -412,7 +412,7 @@
             "id": 59,
             "title": "Devis pour trois ordinateurs portables",
             "description": "Nous prévoyons trois recrutements au second semestre. Pouvez-vous nous transmettre un devis pour trois ordinateurs portables standards ?",
-            "expected_category": "autre",
+            "expected_category": "materiel",
             "expected_priority": "low"
         },
         {
