@@ -355,7 +355,7 @@ class DemoSeeder extends Seeder
     }
 
     /**
-     * @param  array{status: TicketStatus, messages?: list<array{0: string, 1: string, 2?: bool}>, reopened?: bool}  $scenario
+     * @param  array{status: TicketStatus, messages?: list<array{0: string, 1: string, 2?: bool}>, reopened?: bool, rating?: array{0: int, 1: string|null}}  $scenario
      * @param  array<string, User>  $users
      * @param  callable(): void  $tick
      */
@@ -400,10 +400,19 @@ class DemoSeeder extends Seeder
             $tick();
             $this->workflow->transition($ticket, TicketStatus::Closed, $requester);
         }
+
+        // The requester gave their opinion on the resolution.
+        if (isset($scenario['rating'])) {
+            $ticket->forceFill([
+                'satisfaction_score' => $scenario['rating'][0],
+                'satisfaction_comment' => $scenario['rating'][1],
+                'rated_at' => now(),
+            ])->save();
+        }
     }
 
     /**
-     * @return list<array{title: string, description: string, requester: string, days_ago: int, status: TicketStatus, category?: string, priority?: TicketPriority, technician?: string, messages?: list<array{0: string, 1: string, 2?: bool}>, reopened?: bool, ai?: array{0: string, 1: TicketPriority, 2: float}, ai_rejected?: bool, ai_reply?: array{0: string, 1: string}, ai_no_article?: bool}>
+     * @return list<array{title: string, description: string, requester: string, days_ago: int, status: TicketStatus, category?: string, priority?: TicketPriority, technician?: string, messages?: list<array{0: string, 1: string, 2?: bool}>, reopened?: bool, ai?: array{0: string, 1: TicketPriority, 2: float}, ai_rejected?: bool, ai_reply?: array{0: string, 1: string}, ai_no_article?: bool, rating?: array{0: int, 1: string|null}}>
      */
     private function scenarios(): array
     {
@@ -412,6 +421,7 @@ class DemoSeeder extends Seeder
                 'title' => 'Souris sans fil qui se déconnecte toutes les cinq minutes',
                 'description' => "Ma souris sans fil perd la connexion plusieurs fois par heure. J'ai déjà changé les piles.",
                 'requester' => 'user3', 'days_ago' => 12, 'status' => TicketStatus::Closed,
+                'rating' => [5, 'Rapide et efficace, merci.'],
                 'category' => 'materiel', 'priority' => TicketPriority::Low, 'technician' => 'tech2',
                 'ai' => ['materiel', TicketPriority::Low, 0.95],
                 'messages' => [
@@ -423,6 +433,7 @@ class DemoSeeder extends Seeder
                 'title' => 'Question sur la sauvegarde de mes documents',
                 'description' => 'Je voudrais savoir si les fichiers enregistrés sur mon bureau sont sauvegardés, ou seulement ceux du lecteur réseau.',
                 'requester' => 'user5', 'days_ago' => 10, 'status' => TicketStatus::Closed,
+                'rating' => [4, null],
                 'category' => 'autre', 'priority' => TicketPriority::Low, 'technician' => 'tech1', 'reopened' => true,
                 'ai' => ['autre', TicketPriority::Low, 0.81],
                 'messages' => [
@@ -434,6 +445,7 @@ class DemoSeeder extends Seeder
                 'title' => 'Écran externe non détecté sur la station d\'accueil',
                 'description' => "Depuis lundi, mon deuxième écran reste noir quand je branche mon portable sur la station d'accueil.",
                 'requester' => 'user2', 'days_ago' => 8, 'status' => TicketStatus::Closed,
+                'rating' => [3, 'Résolu, mais il a fallu relancer.'],
                 'category' => 'materiel', 'priority' => TicketPriority::Normal, 'technician' => 'tech1',
                 // The AI hesitated: the technician corrected the category.
                 'ai' => ['logiciel', TicketPriority::Normal, 0.62],

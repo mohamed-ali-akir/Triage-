@@ -58,6 +58,25 @@ Variables à renseigner dans `.env` :
 | 15 | Actions GitHub référencées par étiquette | Chaque action est épinglée sur un commit ; Dependabot propose les mises à jour | `.github/workflows/ci.yml` | La CI elle-même |
 | 16 | Ollama en HTTP par défaut | HTTP refusé vers une autre machine, sauf `OLLAMA_ALLOW_INSECURE=true` | `OllamaProvider` | `DeploymentCheckTest` |
 
+## Les fonctions ajoutées ensuite
+
+Le centre d'aide, les pièces jointes, l'avis du demandeur, l'affectation et l'export CSV sont
+arrivés après l'audit. Chacun a été écrit avec son risque propre en tête.
+
+| Fonction | Risque | Protection | Test |
+|---|---|---|---|
+| Centre d'aide | Une procédure interne lue par un salarié | Article interne par défaut ; recherche et suggestions limitées aux articles publics ; même 404 pour un article caché | `HelpCenterTest` |
+| Pièces jointes | Dépôt d'un script, d'une page HTML, d'une image SVG piégée | Types lus dans le contenu ; l'extension doit correspondre ; 5 Mo, 3 fichiers par envoi, 10 par ticket | `TicketAttachmentTest` |
+| Pièces jointes | Lecture par quelqu'un qui n'a pas accès au ticket | Disque privé sans route publique ; téléchargement par un contrôleur qui applique la Policy ; pièce liée au ticket de l'adresse | `TicketAttachmentTest` |
+| Pièces jointes | Fichier affiché ou exécuté par le navigateur | Toujours envoyé en téléchargement, avec `nosniff` ; nom de stockage aléatoire | `TicketAttachmentTest` |
+| Export CSV | Formule exécutée dans le tableur de l'administrateur | Cellules commençant par `=`, `+`, `-`, `@` neutralisées ; export réservé à l'administrateur, limité et journalisé | `TicketExportTest` |
+| Avis du demandeur | Mot de passe ou donnée personnelle dans le commentaire | Mot de passe retiré à l'enregistrement ; commentaire effacé par la purge | `TicketSatisfactionTest` |
+| Affectation | Ticket donné à un compte qui ne devrait pas le traiter | Seulement à un technicien actif ; réservé au support ; auteur de la décision dans l'historique | `TicketAssignmentTest` |
+
+Deux limites : les pièces jointes ne passent pas par un antivirus (elles ne sont jamais exécutées
+par l'application, mais un technicien peut ouvrir un PDF piégé sur son poste), et elles ne sont
+pas accessibles depuis l'application mobile.
+
 ## Le journal de sécurité
 
 `storage/logs/audit-AAAA-MM-JJ.log`, conservé 180 jours. Il reçoit :
@@ -66,7 +85,8 @@ Variables à renseigner dans `.env` :
 - les tentatives échouées (adresse e-mail essayée, jamais le mot de passe) ;
 - les connexions de l'application mobile et les codes de double authentification refusés ;
 - les réinitialisations de mot de passe ;
-- les comptes créés ou modifiés par un administrateur : qui, quel compte, quels champs.
+- les comptes créés ou modifiés par un administrateur : qui, quel compte, quels champs ;
+- les exports CSV des tickets : qui, combien de tickets.
 
 Chaque ligne porte l'adresse IP. Le journal n'a pas d'écran dans l'application : il se lit sur
 le serveur.
