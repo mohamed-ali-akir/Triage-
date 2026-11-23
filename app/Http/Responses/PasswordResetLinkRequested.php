@@ -3,7 +3,9 @@
 namespace App\Http\Responses;
 
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
 use Laravel\Fortify\Contracts\FailedPasswordResetLinkRequestResponse;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -17,6 +19,10 @@ class PasswordResetLinkRequested implements FailedPasswordResetLinkRequestRespon
 {
     public function toResponse($request): Response
     {
+        // For a known address the framework hashes the reset token before storing it.
+        // Spend the same time here, so that the delay does not reveal the answer either.
+        Hash::make(Str::random(40));
+
         $message = trans(Password::RESET_LINK_SENT);
 
         return $request->wantsJson()
