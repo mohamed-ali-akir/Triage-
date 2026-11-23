@@ -16,7 +16,7 @@ test('a user deactivated while logged in is logged out on the next request', fun
 
     $this->actingAs($user)->get('/profile')->assertOk();
 
-    $user->update(['is_active' => false]);
+    $user->forceFill(['is_active' => false])->save();
 
     $this->get('/profile')->assertRedirect('/login');
     $this->assertGuest();

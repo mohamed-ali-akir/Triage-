@@ -5,10 +5,10 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\LoginRequest;
 use App\Models\User;
+use App\Services\Auth\CredentialChecker;
+use App\Support\Audit;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Laravel\Fortify\Contracts\TwoFactorAuthenticationProvider;
 
@@ -17,26 +17,37 @@ class AuthController extends Controller
     /**
      * Exchange credentials for an access token.
      */
-    public function login(LoginRequest $request, TwoFactorAuthenticationProvider $twoFactor): JsonResponse
+    public function login(LoginRequest $request, CredentialChecker $credentials, TwoFactorAuthenticationProvider $twoFactor): JsonResponse
     {
-        $user = User::query()->where('email', $request->string('email')->lower()->toString())->first();
+        $email = $request->string('email')->toString();
+        $user = $credentials->check($email, $request->string('password')->toString());
 
         // One message for every failure: unknown address, wrong password, inactive account.
         // The answer must not reveal which accounts exist.
-        if ($user === null || ! $user->is_active || ! Hash::check($request->string('password')->toString(), $user->password)) {
+        if ($user === null) {
+            Audit::record('api.login.failed', ['email' => $email]);
+
             throw ValidationException::withMessages(['email' => __('auth.failed')]);
         }
 
-        if (Gate::forUser($user)->denies('use-mobile-api')) {
-            return response()->json(['message' => 'L\'application mobile est réservée aux techniciens.'], 403);
-        }
-
+        // The second factor comes before any other answer: without it, nothing is
+        // said about the account, not even that the mobile application is not for it.
         if ($user->hasEnabledTwoFactorAuthentication()) {
             $this->checkTwoFactorCode($user, $request->string('code')->toString(), $twoFactor);
         }
 
+        if (! $user->isTechnician()) {
+            return response()->json(['message' => 'L\'application mobile est réservée aux techniciens.'], 403);
+        }
+
+        if ($user->pendingSecurityStep() !== null) {
+            return response()->json(['message' => $user->pendingSecurityStep().' Connectez-vous d\'abord sur le site.'], 403);
+        }
+
         $expiresAt = now()->addMinutes((int) config('sanctum.expiration'));
         $token = $user->createToken($request->string('device_name')->toString(), ['*'], $expiresAt);
+
+        Audit::record('api.login', ['account' => $user->id, 'device' => $request->string('device_name')->toString()]);
 
         return response()->json([
             'token' => $token->plainTextToken,
@@ -67,6 +78,8 @@ class AuthController extends Controller
         }
 
         if (! $twoFactor->verify(decrypt($user->two_factor_secret), $code)) {
+            Audit::record('api.login.two-factor-failed', ['account' => $user->id]);
+
             throw ValidationException::withMessages(['code' => 'Le code de double authentification est invalide.']);
         }
     }

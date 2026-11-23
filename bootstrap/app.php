@@ -1,6 +1,8 @@
 <?php
 
 use App\Exceptions\TicketWorkflowException;
+use App\Http\Middleware\AddSecurityHeaders;
+use App\Http\Middleware\EnsureAccountIsSecured;
 use App\Http\Middleware\EnsureUserIsActive;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -15,9 +17,18 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->append(AddSecurityHeaders::class);
+
+        // A session opened with an old password is closed as soon as the password changes.
+        $middleware->authenticateSessions();
+
         $middleware->web(append: [
             EnsureUserIsActive::class,
+            EnsureAccountIsSecured::class,
         ]);
+
+        // The "api" rate limit is defined in AppServiceProvider.
+        $middleware->throttleApi();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

@@ -12,8 +12,8 @@ use Illuminate\Support\Facades\Route;
  */
 
 Route::prefix('v1')->name('api.v1.')->group(function () {
-    // Five attempts per minute and per IP address.
-    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1')->name('login');
+    // Same limits as the website: per e-mail address and IP address, and per e-mail address alone.
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:api-login')->name('login');
 
     // A Sanctum token, held by an active technician.
     Route::middleware(['auth:sanctum', 'can:use-mobile-api'])->group(function () {

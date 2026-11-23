@@ -31,7 +31,8 @@ return [
 
     'domain' => null,
 
-    'middleware' => ['web'],
+    // "throttle:fortify" only limits the "forgotten password" form (see FortifyServiceProvider).
+    'middleware' => ['web', 'throttle:fortify'],
 
     'limiters' => [
         'login' => 'login',

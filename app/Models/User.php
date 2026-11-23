@@ -14,7 +14,8 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Sanctum\HasApiTokens;
 
-#[Fillable(['name', 'email', 'password', 'role', 'is_active', 'department_id'])]
+// The role and the active flag are never mass assignable: no form can grant itself a role.
+#[Fillable(['name', 'email', 'password', 'department_id'])]
 #[Hidden(['password', 'remember_token', 'two_factor_secret', 'two_factor_recovery_codes'])]
 class User extends Authenticatable
 {
@@ -40,7 +41,23 @@ class User extends Authenticatable
             'password' => 'hashed',
             'role' => UserRole::class,
             'is_active' => 'boolean',
+            'must_change_password' => 'boolean',
         ];
+    }
+
+    /**
+     * A token of the mobile application must not survive a new password,
+     * a change of role or the deactivation of the account.
+     */
+    protected static function booted(): void
+    {
+        static::updated(function (User $user): void {
+            $deactivated = $user->wasChanged('is_active') && ! $user->is_active;
+
+            if ($deactivated || $user->wasChanged(['password', 'role'])) {
+                $user->tokens()->delete();
+            }
+        });
     }
 
     /**
@@ -87,5 +104,23 @@ class User extends Authenticatable
     public function isStaff(): bool
     {
         return $this->isTechnician() || $this->isAdmin();
+    }
+
+    /**
+     * What the user must do before the account can be used, or null when nothing is pending:
+     * replace a password chosen by an administrator, or enable two-factor authentication
+     * when the application requires it from the support staff.
+     */
+    public function pendingSecurityStep(): ?string
+    {
+        if ($this->must_change_password) {
+            return 'Votre mot de passe a été choisi par un administrateur : remplacez-le pour continuer.';
+        }
+
+        if (config('security.require_two_factor_for_staff') && $this->isStaff() && ! $this->hasEnabledTwoFactorAuthentication()) {
+            return 'La double authentification est obligatoire pour l\'équipe du support : activez-la pour continuer.';
+        }
+
+        return null;
     }
 }
