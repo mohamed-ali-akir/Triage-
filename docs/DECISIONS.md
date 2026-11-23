@@ -114,3 +114,43 @@ messages absents retombent sur l'anglais (`APP_FALLBACK_LOCALE`).
 Les tests tournent sur SQLite (rapide) et sur MySQL (base de production), car les deux moteurs
 n'ont pas le même comportement. `composer audit` fait échouer la CI si une dépendance a une
 faille connue, et Dependabot propose les mises à jour chaque semaine.
+
+### D19 — Gates pour les zones, Policies pour les tickets
+
+Deux Gates protègent des zones entières : `access-admin` (administration) et `view-queue`
+(file des tickets). Elles sont appliquées sur les routes par le middleware `can:`. La
+`TicketPolicy` répond aux questions qui dépendent d'un ticket précis : voir, répondre, trier,
+prendre en charge, changer le statut.
+
+### D20 — Aucune donnée personnelle dans les notifications
+
+La table `notifications` ne contient que le numéro du ticket et une phrase générique
+(« Le support a répondu à votre ticket #12 »). Ni titre, ni nom, ni contenu de message. Les
+e-mails suivent la même règle : le contenu se lit dans l'application, après connexion. Cela
+simplifie la conformité RGPD : il n'y a rien à purger dans cette table.
+
+### D21 — Sécurité des composants Livewire
+
+Une action Livewire est une requête HTTP comme une autre. Chaque action appelle donc
+`authorize()`, et le ticket d'un composant est marqué `#[Locked]` pour que le navigateur ne
+puisse pas le remplacer par un autre. Les filtres de la file sont convertis avec `tryFrom()` :
+une valeur inconnue est ignorée au lieu d'être utilisée.
+
+### D22 — Le seeder de démonstration passe par le vrai workflow
+
+Les tickets de démonstration ne sont pas insérés directement en base : le seeder appelle les
+mêmes actions et le même `TicketWorkflow` que l'application. Leur historique, leurs dates et
+leurs notifications sont donc toujours cohérents avec les règles du projet, et un test vérifie
+ce que le README promet (1 administrateur, 2 techniciens, 5 utilisateurs).
+
+### D23 — Erreurs métier affichées, pas d'erreur 500
+
+Les exceptions du workflow (`InvalidTicketTransition`, `TicketNotAssignable`) héritent d'une
+classe commune, rendue une seule fois dans `bootstrap/app.php` : message d'erreur pour le web,
+réponse JSON 422 pour l'API. Les contrôleurs n'ont aucun `try/catch` à écrire.
+
+### D24 — Larastan lit la méthode `casts()` des modèles
+
+L'option `parseModelCastsMethod` de `phpstan.neon` permet à PHPStan de savoir que
+`$user->role` est un `UserRole` et non une chaîne. Sans elle, l'analyse signale de fausses
+erreurs sur toutes les comparaisons avec un enum.
