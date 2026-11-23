@@ -7,6 +7,7 @@ import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -34,7 +35,8 @@ class TechnicianJourneyTest {
 
         composeRule.onNodeWithText("Adresse e-mail").performTextInput("tech1@triage.test")
         composeRule.onNodeWithText("Mot de passe").performTextInput("password")
-        composeRule.onNodeWithText("Se connecter").performClick()
+        // The keyboard is open: bring the button into view before pressing it.
+        composeRule.onNodeWithText("Se connecter").performScrollTo().performClick()
 
         // 2. The list of assigned tickets comes from the server.
         waitForText("Mes tickets")
