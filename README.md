@@ -15,7 +15,8 @@ une priorité et une réponse ; **un technicien valide toujours avant toute acti
 | 2 | Tri par IA : classification, anonymisation, validation par le technicien, mode dégradé | Terminée |
 | 3 | Base de connaissances, réponses suggérées avec sources, détection des doublons | Terminée |
 | 4 | Évaluation de l'IA, modèle local, tableau de bord, délais cibles, purge RGPD | Terminée |
-| 5 | API REST et application mobile du technicien | À venir |
+| 5a | API REST du technicien (Sanctum) | Terminée |
+| 5b | Application Android du technicien | Code écrit, à compiler dans Android Studio |
 
 ## Documentation
 
@@ -23,6 +24,7 @@ une priorité et une réponse ; **un technicien valide toujours avant toute acti
 - [Modèle de données et diagrammes](docs/MODELE_DONNEES.md)
 - [Journal des décisions techniques](docs/DECISIONS.md)
 - [Protection des données personnelles (RGPD)](docs/RGPD.md)
+- [API REST de l'application mobile](docs/API.md)
 - [Évaluations du tri par IA](docs/evaluations/README.md)
 
 ## Prérequis

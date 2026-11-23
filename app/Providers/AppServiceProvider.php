@@ -39,5 +39,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Gate::define('access-admin', fn (User $user): bool => $user->isAdmin());
         Gate::define('view-queue', fn (User $user): bool => $user->isStaff());
+        // The mobile application is a tool for technicians only.
+        Gate::define('use-mobile-api', fn (User $user): bool => $user->isTechnician() && $user->is_active);
     }
 }

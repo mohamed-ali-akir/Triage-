@@ -361,3 +361,36 @@ Vingt-quatre mois après la clôture, une commande planifiée efface le titre, l
 messages et les brouillons de l'IA. La catégorie, la priorité, les dates et l'historique restent :
 ils alimentent les statistiques et n'identifient plus personne. Le droit à l'effacement suit la
 même logique avec `triage:anonymize-user`, qui transforme le compte en coquille anonyme.
+
+## Phase 5 — API et application mobile
+
+### D54 — Jetons Sanctum pour le mobile
+
+Une application mobile ne peut pas utiliser la session par cookie du site web. Sanctum délivre
+un jeton par appareil : le téléphone ne garde jamais le mot de passe, un jeton se révoque sans
+changer de mot de passe, et il expire au bout de 30 jours. C'est la solution officielle de
+Laravel, bien plus simple qu'OAuth pour une application interne.
+
+### D55 — L'API réutilise les règles du web
+
+Les contrôleurs d'API appellent les mêmes Policies, le même `TicketWorkflow` et la même action
+`PostTicketMessage` que le site. Il n'existe donc qu'une seule définition de « qui a le droit »
+et de « quelle transition est valide ». C'est ce que préparait la décision D10.
+
+### D56 — Le serveur dit à l'application ce qui est permis
+
+Le détail d'un ticket contient `allowed_statuses` : les statuses que ce technicien peut choisir
+maintenant. L'application affiche un bouton par entrée. La machine à états n'est pas recopiée
+en Kotlin : si une règle change côté serveur, l'application suit sans mise à jour.
+
+### D57 — API Resources : ne renvoyer que le nécessaire
+
+Les classes `JsonResource` décrivent explicitement chaque champ renvoyé. Pour les autres
+personnes, seuls l'identifiant et le nom sortent, jamais l'adresse e-mail ni un champ interne.
+Renvoyer un modèle Eloquent brut exposerait toute nouvelle colonne par accident.
+
+### D58 — Une API versionnée et réservée aux techniciens
+
+Les routes sont préfixées par `/api/v1` : une future version incompatible pourra cohabiter avec
+l'application déjà installée sur les téléphones. La Gate `use-mobile-api` ferme toute l'API aux
+autres rôles, et la connexion est limitée à 5 tentatives par minute.

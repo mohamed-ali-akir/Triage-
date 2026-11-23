@@ -255,3 +255,9 @@ chacune une table de liaison dans le MLD.
 La phase 4 n'ajoute qu'une colonne : `tickets.anonymized_at`, renseignée quand le contenu d'un
 ticket a été effacé à la fin de sa durée de conservation. Le tableau de bord et l'évaluation
 lisent les tables existantes (`tickets`, `ai_suggestions`, `ai_logs`).
+
+## 9. Phase 5
+
+L'API ajoute la table `personal_access_tokens` de Laravel Sanctum : un jeton par appareil,
+stocké sous forme d'empreinte (le jeton lui-même n'est jamais lisible en base), avec sa date
+d'expiration et sa dernière utilisation.
