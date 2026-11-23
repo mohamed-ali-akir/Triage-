@@ -128,7 +128,7 @@ ANTHROPIC_API_KEY=votre-clé
 | `ANTHROPIC_API_KEY` | Clé de l'API Claude. Ne la commitez jamais | vide |
 | `ANTHROPIC_MODEL` | Modèle Claude utilisé | `claude-opus-5-5` |
 | `ANTHROPIC_EFFORT` | Profondeur de raisonnement (`low`, `medium`, `high`) | `low` |
-| `ANTHROPIC_REFUSAL_FALLBACK` | Si le modèle refuse une requête, l'API la rejoue sur un modèle de repli. À passer à `false` avec un modèle Haiku | `true` |
+| `ANTHROPIC_REFUSAL_FALLBACK` | Si le modèle refuse une requête, l'API la rejoue sur le modèle de repli qu'elle recommande. Sans effet avec un modèle Haiku, qui n'a pas de repli | `true` |
 | `AI_TIMEOUT` | Délai maximal d'une réponse, en secondes | `30` |
 | `AI_RATE_LIMIT_PER_MINUTE` | Nombre maximal d'appels à l'IA par minute | `20` |
 | `AI_LOW_CONFIDENCE_THRESHOLD` | Seuil du badge « Confiance faible » | `0.7` |

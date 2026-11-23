@@ -22,7 +22,7 @@ class CheckAi extends Command
     private const HINTS = [
         'not_configured' => 'La clé est absente : renseignez ANTHROPIC_API_KEY dans .env.',
         'authentication' => 'La clé est refusée : vérifiez ANTHROPIC_API_KEY (clé révoquée, mal copiée, ou d\'un autre compte).',
-        'http_400' => 'La requête est refusée : vérifiez ANTHROPIC_MODEL. Avec un modèle Haiku, passez ANTHROPIC_REFUSAL_FALLBACK=false ; avec un ancien modèle, videz ANTHROPIC_EFFORT.',
+        'http_400' => 'La requête est refusée : vérifiez ANTHROPIC_MODEL. Avec un ancien modèle, essayez ANTHROPIC_REFUSAL_FALLBACK=false et videz ANTHROPIC_EFFORT.',
         'http_404' => 'Le modèle est introuvable : vérifiez ANTHROPIC_MODEL (ou OLLAMA_MODEL, puis « ollama pull »).',
         'rate_limited' => 'Le quota de l\'API est atteint : réessayez plus tard ou vérifiez les limites de votre compte.',
         'overloaded' => 'Le service est surchargé : réessayez dans quelques minutes.',
