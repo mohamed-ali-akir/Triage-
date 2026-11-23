@@ -49,9 +49,8 @@ class AnthropicProvider implements AiProvider
                 ->asJson()
                 ->acceptJson()
                 ->post('/v1/messages', $this->payload($systemPrompt, $userPrompt, $jsonSchema));
-        } catch (ConnectionException) {
-            // Raised for a timeout as well as for an unreachable server.
-            throw AiProviderException::timeout();
+        } catch (ConnectionException $exception) {
+            throw AiProviderException::fromConnection($exception);
         }
 
         if ($response->failed()) {

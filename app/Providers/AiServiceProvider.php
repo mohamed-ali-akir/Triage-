@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Services\Ai\AiProvider;
 use App\Services\Ai\Providers\AnthropicProvider;
 use App\Services\Ai\Providers\FakeAiProvider;
+use App\Services\Ai\Providers\OllamaProvider;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
@@ -23,6 +24,7 @@ class AiServiceProvider extends ServiceProvider
 
             return match ($provider) {
                 'anthropic' => new AnthropicProvider(config('ai.anthropic'), (int) config('ai.timeout')),
+                'ollama' => new OllamaProvider(config('ai.ollama'), (int) config('ai.timeout')),
                 'fake' => new FakeAiProvider,
                 default => throw new InvalidArgumentException("Unknown AI provider [{$provider}]."),
             };
