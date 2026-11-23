@@ -17,6 +17,16 @@ test('the system prompt tells the model that the ticket is data, not instruction
         ->not->toContain('{{');
 });
 
+test('a placeholder written inside a value is not replaced in its turn', function () {
+    $prompt = (new PromptRepository)->render('reply-user', [
+        'ticket' => 'Bonjour {{ articles }} merci',
+        'articles' => 'CONTENU DES ARTICLES',
+    ]);
+
+    expect($prompt)->toContain('Bonjour {{ articles }} merci')
+        ->and(substr_count($prompt, 'CONTENU DES ARTICLES'))->toBe(1);
+});
+
 test('an unknown prompt is an error', function () {
     (new PromptRepository)->render('does-not-exist');
 })->throws(InvalidArgumentException::class);

@@ -54,10 +54,20 @@ test('what statistics need survives the purge', function () {
         ->and($ticket->suggestions()->count())->toBe(0);
 });
 
+test('a ticket resolved long ago but never closed loses its content too', function () {
+    $resolved = Ticket::factory()->assignedTo($this->technician, TicketStatus::Resolved)->create(['resolved_at' => now()->subYears(5)]);
+
+    $this->artisan('triage:purge-old-tickets')->expectsOutputToContain('1 ticket(s) anonymisé(s)');
+
+    expect($resolved->refresh()->title)->toBe(TicketAnonymizer::ERASED_TITLE)
+        // Its status is kept: the purge erases texts, it does not rewrite history.
+        ->and($resolved->status)->toBe(TicketStatus::Resolved);
+});
+
 test('recent, open or already purged tickets are left alone', function () {
     $recent = closedTicket(now()->subMonths(23));
     $open = Ticket::factory()->pendingValidation()->create(['created_at' => now()->subYears(5)]);
-    $resolved = Ticket::factory()->assignedTo($this->technician, TicketStatus::Resolved)->create(['resolved_at' => now()->subYears(5)]);
+    $resolved = Ticket::factory()->assignedTo($this->technician, TicketStatus::Resolved)->create(['resolved_at' => now()->subMonths(23)]);
     $alreadyDone = closedTicket(attributes: ['title' => 'Déjà traité', 'anonymized_at' => now()->subMonth()]);
 
     $this->artisan('triage:purge-old-tickets')->expectsOutputToContain('0 ticket(s) anonymisé(s)');
@@ -81,7 +91,7 @@ test('a dry run counts the tickets without erasing anything', function () {
     $ticket = closedTicket();
 
     $this->artisan('triage:purge-old-tickets', ['--dry-run' => true])
-        ->expectsOutputToContain('1 ticket(s) clos depuis plus de 24 mois seraient anonymisés')
+        ->expectsOutputToContain('1 ticket(s) clos ou résolus depuis plus de 24 mois seraient anonymisés')
         ->assertSuccessful();
 
     expect($ticket->refresh()->anonymized_at)->toBeNull();
@@ -107,6 +117,25 @@ test('the right to erasure anonymizes an account and its tickets', function () {
         ->and($user->notifications()->count())->toBe(0)
         ->and($open->refresh()->title)->toBe(TicketAnonymizer::ERASED_TITLE)
         ->and($closed->refresh()->title)->toBe(TicketAnonymizer::ERASED_TITLE);
+});
+
+test('the right to erasure also removes the name from what other people wrote', function () {
+    $user = User::factory()->create(['name' => 'Karim Benali', 'email' => 'karim@exemple.fr']);
+    $colleague = User::factory()->create();
+
+    $ticket = Ticket::factory()->for($colleague, 'requester')->pendingValidation()->create([
+        'title' => 'Le poste de Karim Benali est en panne',
+        'description' => 'Merci de prévenir karim@exemple.fr quand ce sera réglé.',
+    ]);
+    $message = TicketMessage::factory()->for($ticket)->for($colleague, 'author')->create(['body' => 'karim benali est en congé demain.']);
+    $suggestion = AiSuggestion::factory()->for($ticket)->create(['reply' => 'Bonjour, nous prévenons Karim Benali.']);
+
+    $this->artisan('triage:anonymize-user', ['email' => 'karim@exemple.fr', '--force' => true])->assertSuccessful();
+
+    expect($ticket->refresh()->title)->toBe('Le poste de [personne anonymisée] est en panne')
+        ->and($ticket->description)->toBe('Merci de prévenir [personne anonymisée] quand ce sera réglé.')
+        ->and($message->refresh()->body)->toBe('[personne anonymisée] est en congé demain.')
+        ->and($suggestion->refresh()->reply)->toBe('Bonjour, nous prévenons [personne anonymisée].');
 });
 
 test('an anonymized account can no longer log in', function () {

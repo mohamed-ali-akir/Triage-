@@ -65,6 +65,15 @@ return [
             'replace_placeholders' => true,
         ],
 
+        // Security journal (logins, failures, account changes), kept six months.
+        'audit' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/audit.log'),
+            'level' => 'info',
+            'days' => 180,
+            'replace_placeholders' => true,
+        ],
+
         'daily' => [
             'driver' => 'daily',
             'path' => storage_path('logs/laravel.log'),

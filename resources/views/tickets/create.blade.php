@@ -14,7 +14,7 @@
             </x-form.field>
 
             <p class="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-                N'écrivez jamais de mot de passe dans un ticket. Le support ne vous le demandera pas.
+                N'écrivez jamais de mot de passe dans un ticket : le support ne vous le demandera pas. Un mot de passe écrit par erreur est retiré à l'enregistrement.
             </p>
 
             <div class="flex gap-2">

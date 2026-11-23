@@ -59,7 +59,7 @@ test('wrong credentials are refused with the same message', function (array $ove
 ]);
 
 test('a deactivated account cannot log in', function () {
-    $this->technician->update(['is_active' => false]);
+    $this->technician->forceFill(['is_active' => false])->save();
 
     apiLogin()->assertUnprocessable()->assertJsonValidationErrors('email');
 });

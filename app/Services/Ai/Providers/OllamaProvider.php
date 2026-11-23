@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Http;
 class OllamaProvider implements AiProvider
 {
     /**
-     * @param  array{base_url: string, model: string}  $config
+     * @param  array{base_url: string, model: string, allow_insecure: bool}  $config
      */
     public function __construct(
         private readonly array $config,
@@ -51,6 +51,10 @@ class OllamaProvider implements AiProvider
             $payload['format'] = $jsonSchema;
         }
 
+        if ($this->wouldSendTicketsInClear()) {
+            throw AiProviderException::insecureTransport();
+        }
+
         try {
             $response = Http::baseUrl($this->config['base_url'])
                 ->timeout($this->timeout)
@@ -78,5 +82,21 @@ class OllamaProvider implements AiProvider
             outputTokens: (int) $response->json('eval_count', 0),
             model: (string) $response->json('model', $this->config['model']),
         );
+    }
+
+    /**
+     * Plain HTTP is fine on the same machine. Towards another machine, the content
+     * of the tickets would cross the network in clear text.
+     */
+    private function wouldSendTicketsInClear(): bool
+    {
+        if ($this->config['allow_insecure']) {
+            return false;
+        }
+
+        $url = parse_url((string) $this->config['base_url']);
+
+        return ($url['scheme'] ?? 'http') !== 'https'
+            && ! in_array($url['host'] ?? '', ['localhost', '127.0.0.1', '[::1]', '::1'], true);
     }
 }

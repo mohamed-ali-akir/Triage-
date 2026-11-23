@@ -261,3 +261,10 @@ lisent les tables existantes (`tickets`, `ai_suggestions`, `ai_logs`).
 L'API ajoute la table `personal_access_tokens` de Laravel Sanctum : un jeton par appareil,
 stocké sous forme d'empreinte (le jeton lui-même n'est jamais lisible en base), avec sa date
 d'expiration et sa dernière utilisation.
+
+## 10. Correctifs de sécurité
+
+Une seule colonne s'ajoute : `users.must_change_password`. Elle vaut vrai tant que le mot de
+passe est celui qu'un administrateur a choisi ; l'utilisateur doit alors le remplacer avant de
+pouvoir utiliser l'application. Le journal de sécurité n'est pas une table : c'est un fichier
+(`storage/logs/audit-*.log`), décrit dans `SECURITE.md`.

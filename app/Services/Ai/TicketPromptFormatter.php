@@ -29,10 +29,16 @@ class TicketPromptFormatter
     }
 
     /**
-     * A ticket must not be able to close its block, nor to forge an article or a candidate block.
+     * A ticket must not be able to close its block, nor to forge an article or a candidate
+     * block, nor to open any other tag: after this, it contains no angle bracket at all.
      */
     private function neutraliseTags(string $text): string
     {
-        return (string) preg_replace('/<\s*\/?\s*(?:ticket|articles?|candidats?)\b[^>]*>/iu', '[balise retirée]', $text);
+        // Look-alike characters first, so that "＜/ticket＞" is treated like "</ticket>".
+        $text = str_replace(['＜', '﹤', '＞', '﹥'], ['<', '<', '>', '>'], $text);
+
+        $text = (string) preg_replace('/<\s*\/?\s*(?:ticket|articles?|candidats?)\b[^>]*>/iu', '[balise retirée]', $text);
+
+        return str_replace(['<', '>'], ['‹', '›'], $text);
     }
 }

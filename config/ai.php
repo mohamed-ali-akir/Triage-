@@ -63,6 +63,9 @@ return [
     'ollama' => [
         'base_url' => env('OLLAMA_BASE_URL', 'http://localhost:11434'),
         'model' => env('OLLAMA_MODEL', 'llama3.2'),
+        // Tickets travel in clear text over plain HTTP: accepted on the same machine only,
+        // unless this is set to true (for example on a network that is already encrypted).
+        'allow_insecure' => (bool) env('OLLAMA_ALLOW_INSECURE', false),
     ],
 
     /*

@@ -13,10 +13,32 @@ class PiiMasker
 {
     private const PASSWORD_TOKEN = 'MOT_DE_PASSE';
 
-    // "mot de passe : Azerty123", "mdp = toto", "password is hunter2"...
-    private const PASSWORD_PATTERN = '/\b(?:mot\s+de\s+passe|mdp|password|passwd|pwd)\b(?:\s+(?:actuel|provisoire|temporaire|windows|wifi|vpn))*\s*(?::|=|est|is|c\'est)\s*["\'«]?\s*(?<secret>[^\s"\'»,;]+)/iu';
+    // What replaces a password in a text that is stored, not only sent to the AI.
+    public const REDACTED_PASSWORD = '[mot de passe retiré]';
+
+    // The words that announce a secret: "mot de passe", "mdp", "code wifi", "clé wifi"...
+    private const SECRET_WORD = '(?:mot\s+de\s+passe|mdp|password|passwd|pwd|passphrase|(?:code|cl[ée])\s+(?:wi-?fi|pin|secret|confidentiel|d\'acc[èe]s|de\s+connexion))';
+
+    // "est", ":", "=", "était"... between the word and the secret.
+    private const SEPARATOR = '(?::|=|est|is|was|c\'est|était|sera|devient)';
+
+    // mot de passe : "Abc 123" — a quoted secret may contain spaces.
+    private const QUOTED_PASSWORD_PATTERN = '/\b'.self::SECRET_WORD.'\b[^.!?\n"«]{0,40}?'.self::SEPARATOR.'\s*["«]\s*(?<secret>[^"»\n]{1,60}?)\s*["»]/iu';
+
+    // "mot de passe : Azerty123", "mdp = toto", "password is hunter2", "mon mot de passe était Soleil2024"...
+    private const PASSWORD_PATTERN = '/\b'.self::SECRET_WORD.'\b(?:\s+(?:actuel|provisoire|temporaire|windows|wifi|vpn))*\s*'.self::SEPARATOR.'\s*["\'«]?\s*(?<secret>(?!\[)[^\s"\'»,;]+)/iu';
+
+    // "mon mdp Azerty123 ne marche plus": no "est" nor ":", but a word mixing letters and digits
+    // shortly after the word "mot de passe" is treated as the password itself.
+    private const NEARBY_PASSWORD_PATTERN = '/\b'.self::SECRET_WORD.'\b(?:\s+[^\s.!?\[]+){0,5}?\s+["\'«]?(?<secret>(?!\[)(?=[^\s"\'»,;]*\d)(?=[^\s"\'»,;]*\pL)[^\s"\'»,;]{6,})/iu';
+
+    // "identifiant : jdupont", "login = jdoe": a login is half of a credential.
+    private const LOGIN_PATTERN = '/\b(?:identifiant|login|nom\s+d\'utilisateur|username)\b\s*'.self::SEPARATOR.'\s*["\'«]?(?<secret>(?!\[)[^\s"\'»,;.]+)/iu';
 
     private const EMAIL_PATTERN = '/[a-z0-9._%+\-]+@[a-z0-9.\-]+\.[a-z]{2,}/iu';
+
+    // FR76 3000 6000 0112 3456 7890 189, with or without spaces.
+    private const IBAN_PATTERN = '/\b[A-Z]{2}\d{2}(?:\s?[A-Z0-9]{4}){3,7}(?:\s?[A-Z0-9]{1,3})?\b/';
 
     // At least four groups, so that a time such as 08:30:00 is left alone. Also catches MAC addresses.
     private const IPV6_PATTERN = '/\b(?:[0-9a-f]{1,4}:){3,7}[0-9a-f]{1,4}\b/i';
@@ -26,6 +48,15 @@ class PiiMasker
     // French numbers: 06 12 34 56 78, 06.12.34.56.78, +33 6 12 34 56 78, 0033612345678...
     private const PHONE_PATTERN = '/(?<!\d)(?:(?:\+|00)33[\s.\-]?(?:\(0\)[\s.\-]?)?|0)[1-9](?:[\s.\-]?\d{2}){4}(?!\d)/';
 
+    // 13 to 19 digits: a bank card or a social security number, whatever the grouping.
+    private const LONG_NUMBER_PATTERN = '/(?<![\d\pL])\d(?:[ .\-]?\d){12,18}(?![\d\pL])/u';
+
+    // "12 rue de la Paix", "5 bis boulevard des Capucines".
+    private const ADDRESS_PATTERN = '/\b\d{1,4}(?:\s?(?:bis|ter))?,?\s+(?:rue|avenue|boulevard|bd|impasse|allée|chemin|place|route|quai|cours)(?:\s+(?:de|du|des|la|le|les|l\'|d\'))*\s*\p{Lu}[\pL\-\']*(?:\s+\p{Lu}[\pL\-\']*){0,2}/u';
+
+    // "Mme Durand", "Monsieur Jean Martin": a name the application does not know yet.
+    private const TITLED_NAME_PATTERN = '/\b(?:M\.|Mme|Mlle|Monsieur|Madame|Mademoiselle|Dr|Docteur)\s+(?<secret>\p{Lu}[\pL\-\']+(?:\s+\p{Lu}[\pL\-\']+)?)/u';
+
     /**
      * @param  list<string>  $knownNames  full names of the people known to the application
      */
@@ -34,15 +65,49 @@ class PiiMasker
         $replacements = [];
 
         // Passwords first: once replaced, nothing else can match inside them.
-        $text = $this->maskPattern($text, self::PASSWORD_PATTERN, self::PASSWORD_TOKEN, $replacements, group: 'secret');
+        $text = $this->maskPasswords($text, $replacements);
+        $text = $this->maskPattern($text, self::LOGIN_PATTERN, 'IDENTIFIANT', $replacements, group: 'secret');
         $text = $this->maskPattern($text, self::EMAIL_PATTERN, 'EMAIL', $replacements);
+        // IBANs before phone numbers: an IBAN contains groups of digits that look like one.
+        $text = $this->maskPattern($text, self::IBAN_PATTERN, 'IBAN', $replacements);
         // Phone numbers before IPv4: "06.12.34.56.78" would otherwise be read as an IP address.
         $text = $this->maskPattern($text, self::PHONE_PATTERN, 'TELEPHONE', $replacements);
         $text = $this->maskPattern($text, self::IPV6_PATTERN, 'IP', $replacements);
         $text = $this->maskPattern($text, self::IPV4_PATTERN, 'IP', $replacements);
+        // Long numbers last among digits: two IP addresses side by side must not be read as one.
+        $text = $this->maskPattern($text, self::LONG_NUMBER_PATTERN, 'NUMERO', $replacements);
+        $text = $this->maskPattern($text, self::ADDRESS_PATTERN, 'ADRESSE', $replacements);
         $text = $this->maskNames($text, $knownNames, $replacements);
+        $text = $this->maskPattern($text, self::TITLED_NAME_PATTERN, 'NOM', $replacements, group: 'secret');
 
         return new MaskedText($text, $replacements);
+    }
+
+    /**
+     * Remove the passwords from a text that is about to be stored: a password
+     * written in a ticket would otherwise stay readable by the whole support team.
+     */
+    public function redactPasswords(string $text): string
+    {
+        $replacements = [];
+
+        return (string) preg_replace(
+            '/\['.self::PASSWORD_TOKEN.'_\d+\]/',
+            self::REDACTED_PASSWORD,
+            $this->maskPasswords($text, $replacements),
+        );
+    }
+
+    /**
+     * @param  array<string, string>  $replacements
+     */
+    private function maskPasswords(string $text, array &$replacements): string
+    {
+        foreach ([self::QUOTED_PASSWORD_PATTERN, self::PASSWORD_PATTERN, self::NEARBY_PASSWORD_PATTERN] as $pattern) {
+            $text = $this->maskPattern($text, $pattern, self::PASSWORD_TOKEN, $replacements, group: 'secret');
+        }
+
+        return $text;
     }
 
     /**
@@ -68,11 +133,20 @@ class PiiMasker
         return (string) preg_replace_callback(
             $pattern,
             function (array $match) use ($label, &$replacements, $group): string {
-                $value = $group === null ? $match[0] : $match[$group];
-                $token = $this->tokenFor($value, $label, $replacements);
+                if ($group === null) {
+                    return $this->tokenFor($match[0], $label, $replacements);
+                }
 
-                // With a named group, only that part of the match is replaced.
-                return $group === null ? $token : str_replace($value, $token, $match[0]);
+                // With a named group, only that part of the match is replaced. The group
+                // closes every pattern, so it is the last occurrence of its value in the match.
+                $value = $match[$group];
+
+                return substr_replace(
+                    $match[0],
+                    $this->tokenFor($value, $label, $replacements),
+                    (int) strrpos($match[0], $value),
+                    strlen($value),
+                );
             },
             $text,
         );

@@ -371,7 +371,7 @@ même logique avec `triage:anonymize-user`, qui transforme le compte en coquille
 
 Une application mobile ne peut pas utiliser la session par cookie du site web. Sanctum délivre
 un jeton par appareil : le téléphone ne garde jamais le mot de passe, un jeton se révoque sans
-changer de mot de passe, et il expire au bout de 30 jours. C'est la solution officielle de
+changer de mot de passe, et il expire au bout de 7 jours (30 à l'origine, voir D79). C'est la solution officielle de
 Laravel, bien plus simple qu'OAuth pour une application interne.
 
 ### D55 — L'API réutilise les règles du web
@@ -454,3 +454,102 @@ L'étudiant a relu les 60 étiquettes : d'abord les huit que les trois méthodes
 l'équipement, comme le ticket 5. Corriger dans le sens des méthodes fait monter leur score
 (référence : 78 % puis 82 %), donc le rapport d'origine est conservé et les deux séries de
 chiffres sont publiées. Le jeu n'est plus équilibré (13 `materiel`, 7 `autre`).
+
+## Correctifs de sécurité
+
+L'audit du 23 novembre 2026 a relevé 16 faiblesses ; le détail est dans `SECURITE.md`.
+
+### D67 — Un mot de passe n'est jamais stocké
+
+Le masquage reconnaît plus de formes (« mon mdp Azerty123 ne marche plus », code wifi, IBAN,
+carte, adresse, identifiant). Surtout, un mot de passe écrit dans un ticket ou un message est
+retiré avant l'enregistrement : il n'est donc ni lisible par le support pendant des mois, ni
+envoyé à l'IA. Le texte de l'utilisateur est modifié, ce qui est annoncé sur le formulaire.
+
+### D68 — Un ticket sans chevrons
+
+Retirer quelques balises connues ne suffisait pas : un ticket pouvait en ouvrir d'autres. Tous
+les chevrons du ticket sont remplacés par des guillemets simples, et les variables d'un prompt
+sont remplacées en une seule passe. Le ticket reste du texte, quoi qu'il contienne.
+
+### D69 — La même réponse pour un compte connu ou inconnu
+
+« Mot de passe oublié » répond toujours qu'un lien part « si un compte correspond ». La connexion
+vérifie toujours un hachage, même pour un compte inconnu, pour que le temps de réponse ne dise
+rien non plus. Un seul service, `CredentialChecker`, sert au site et à l'API.
+
+### D70 — Des limites par compte
+
+Cinq tentatives par minute et par adresse IP ne freinent pas une attaque venue de cent machines.
+S'ajoutent 20 tentatives par quart d'heure et par compte, et des limites sur ce qu'un compte
+connecté peut créer : tickets, messages, appels d'API. Le revers est assumé : on peut gêner
+quelqu'un en ratant 20 fois son mot de passe.
+
+### D71 — Changer de mot de passe coupe tout le reste
+
+Le middleware `AuthenticateSession` de Laravel ferme les sessions ouvertes avec l'ancien mot de
+passe. Le modèle `User` révoque les jetons mobiles quand le mot de passe ou le rôle change, ou
+quand le compte est désactivé. La règle est à un seul endroit, donc aucun écran ne peut l'oublier.
+
+### D72 — Le rôle ne s'assigne pas en masse
+
+`role` et `is_active` ne sont plus dans les champs assignables du modèle. L'administration les
+affecte explicitement. Un futur formulaire de profil écrit trop vite ne pourra donc pas
+permettre de se nommer administrateur.
+
+### D73 — Un compte doit être sécurisé avant de servir
+
+Un mot de passe choisi par un administrateur est connu de lui : l'utilisateur doit le remplacer
+à sa première connexion. La double authentification peut être imposée au support
+(`REQUIRE_2FA_FOR_STAFF`). Un seul middleware, `EnsureAccountIsSecured`, renvoie vers la page de
+profil tant que ce n'est pas fait ; l'API mobile applique la même règle.
+
+### D74 — Des en-têtes HTTP, sans bloquer Livewire
+
+`X-Frame-Options` et `frame-ancestors` empêchent d'afficher Triage dans le cadre d'un autre site.
+La `Content-Security-Policy` ne restreint pas les scripts : Livewire en a besoin en ligne. La
+protection contre le XSS reste l'échappement de Blade. C'est une limite écrite, pas cachée.
+
+### D75 — Un journal de sécurité dans un fichier
+
+Connexions, échecs et comptes modifiés sont écrits dans un fichier journal dédié, gardé 180
+jours. Un fichier plutôt qu'une table : pas d'écran à protéger, pas de migration, et il se lit
+avec les outils habituels du serveur. Il ne reçoit jamais de mot de passe.
+
+### D76 — Vérifier la configuration avant d'ouvrir
+
+`triage:check-deployment` échoue si le débogage est actif, si le site n'est pas en HTTPS ou si un
+compte de démonstration a gardé son mot de passe. Les comptes de démonstration ne sont créés
+qu'en environnement `local` ou `testing` : une liste de ce qui est permis, plus sûre qu'une
+liste de ce qui est interdit.
+
+### D77 — L'application mobile ne voit que ses tickets
+
+Sur le site, un technicien lit toute la file : il en a besoin pour trier. Sur le téléphone,
+l'API n'ouvre que les tickets qui lui sont assignés. Un téléphone perdu ou un jeton volé
+n'expose donc qu'une petite partie des tickets.
+
+### D78 — La purge suit la fin réelle du ticket
+
+Un ticket résolu que personne n'a clos gardait son contenu pour toujours. Il est maintenant
+purgé 24 mois après sa résolution. L'effacement d'un compte retire aussi son nom et son adresse
+de ce que les autres ont écrit.
+
+### D79 — Un jeton mobile court et chiffré
+
+Le jeton est chiffré par une clé du Keystore Android, expire au bout de 7 jours au lieu de 30,
+et les jetons expirés sont supprimés chaque jour. L'application peut n'accepter que le
+certificat du serveur : c'est une option de compilation, car il faut connaître son empreinte.
+
+### D80 — Des actions GitHub épinglées
+
+Une étiquette comme `v4` peut être déplacée par qui contrôle l'action ; l'empreinte d'un commit
+ne le peut pas. Chaque action de la CI est donc référencée par son commit, avec l'étiquette en
+commentaire. Dependabot propose les mises à jour.
+
+### D81 — Ollama en clair seulement sur la même machine
+
+En HTTP vers une autre machine, le contenu des tickets traverserait le réseau en clair.
+`OllamaProvider` le refuse, sauf si `OLLAMA_ALLOW_INSECURE=true` dit que le réseau est déjà
+chiffré. Un refus par défaut vaut mieux qu'un avertissement que personne ne lit.
+

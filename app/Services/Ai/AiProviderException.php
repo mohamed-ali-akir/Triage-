@@ -21,6 +21,11 @@ class AiProviderException extends RuntimeException
         return new self('not_configured');
     }
 
+    public static function insecureTransport(): self
+    {
+        return new self('insecure_transport');
+    }
+
     public static function timeout(): self
     {
         return new self('timeout');

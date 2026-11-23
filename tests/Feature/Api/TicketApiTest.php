@@ -97,12 +97,16 @@ test('personal details of other people are not exposed', function () {
         ->not->toContain('password');
 });
 
-test('a technician can read a ticket of a colleague but has no action on it', function () {
-    $ticket = Ticket::factory()->assignedTo($this->colleague, TicketStatus::InProgress)->create();
+test('the mobile application only opens the tickets assigned to its technician', function () {
+    $ofColleague = Ticket::factory()->assignedTo($this->colleague, TicketStatus::InProgress)->create();
+    $unassigned = Ticket::factory()->triaged()->create();
 
-    $this->getJson("/api/v1/tickets/{$ticket->id}")
-        ->assertOk()
-        ->assertJsonPath('data.allowed_statuses', []);
+    // A lost phone must not open the whole queue.
+    $this->getJson("/api/v1/tickets/{$ofColleague->id}")->assertForbidden();
+    $this->getJson("/api/v1/tickets/{$unassigned->id}")->assertForbidden();
+    $this->postJson("/api/v1/tickets/{$ofColleague->id}/messages", ['body' => 'Bonjour'])->assertForbidden();
+
+    expect(TicketMessage::count())->toBe(0);
 });
 
 test('an unknown ticket is a 404 in JSON', function () {

@@ -80,7 +80,8 @@ class DemoSeeder extends Seeder
         $users = [];
 
         foreach ($accounts as $key => [$name, $email, $role, $department]) {
-            $users[$key] = User::updateOrCreate(['email' => $email], [
+            // The role is not mass assignable: it is set explicitly, like in the administration.
+            $users[$key] = User::firstOrNew(['email' => $email])->forceFill([
                 'name' => $name,
                 // Demonstration password only. Never use it outside a demo.
                 'password' => 'password',
@@ -88,6 +89,8 @@ class DemoSeeder extends Seeder
                 'is_active' => true,
                 'department_id' => Department::query()->where('name', $department)->value('id'),
             ]);
+
+            $users[$key]->save();
         }
 
         return $users;

@@ -23,7 +23,8 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
 
-    Route::resource('tickets', TicketController::class)->only(['index', 'create', 'store', 'show']);
+    Route::resource('tickets', TicketController::class)->only(['index', 'create', 'store', 'show'])
+        ->middlewareFor('store', 'throttle:ticket-creation');
     Route::patch('/tickets/{ticket}/status', [TicketStatusController::class, 'update'])->name('tickets.status.update');
     Route::patch('/tickets/{ticket}/triage', [TicketTriageController::class, 'update'])->name('tickets.triage.update');
     Route::patch('/tickets/{ticket}/assign', [TicketAssignmentController::class, 'update'])->name('tickets.assign.update');

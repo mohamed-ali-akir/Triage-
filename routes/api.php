@@ -12,8 +12,8 @@ use Illuminate\Support\Facades\Route;
  */
 
 Route::prefix('v1')->name('api.v1.')->group(function () {
-    // Five attempts per minute and per IP address.
-    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1')->name('login');
+    // Same limits as the website: per e-mail address and IP address, and per e-mail address alone.
+    Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:api-login')->name('login');
 
     // A Sanctum token, held by an active technician.
     Route::middleware(['auth:sanctum', 'can:use-mobile-api'])->group(function () {
@@ -21,8 +21,12 @@ Route::prefix('v1')->name('api.v1.')->group(function () {
         Route::get('/me', [AuthController::class, 'me'])->name('me');
 
         Route::get('/tickets', [TicketController::class, 'index'])->name('tickets.index');
-        Route::get('/tickets/{ticket}', [TicketController::class, 'show'])->name('tickets.show');
-        Route::patch('/tickets/{ticket}/status', [TicketStatusController::class, 'update'])->name('tickets.status.update');
-        Route::post('/tickets/{ticket}/messages', [TicketMessageController::class, 'store'])->name('tickets.messages.store');
+
+        // One ticket: only when it is assigned to the technician who holds the token.
+        Route::middleware('can:accessFromMobile,ticket')->group(function () {
+            Route::get('/tickets/{ticket}', [TicketController::class, 'show'])->name('tickets.show');
+            Route::patch('/tickets/{ticket}/status', [TicketStatusController::class, 'update'])->name('tickets.status.update');
+            Route::post('/tickets/{ticket}/messages', [TicketMessageController::class, 'store'])->name('tickets.messages.store');
+        });
     });
 });

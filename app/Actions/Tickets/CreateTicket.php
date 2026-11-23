@@ -7,12 +7,16 @@ use App\Jobs\ClassifyTicket;
 use App\Jobs\DetectDuplicates;
 use App\Models\Ticket;
 use App\Models\User;
+use App\Services\Privacy\PiiMasker;
 use App\Services\Tickets\TicketWorkflow;
 use Illuminate\Support\Facades\DB;
 
 class CreateTicket
 {
-    public function __construct(private readonly TicketWorkflow $workflow) {}
+    public function __construct(
+        private readonly TicketWorkflow $workflow,
+        private readonly PiiMasker $masker,
+    ) {}
 
     /**
      * @param  array{title: string, description: string}  $data
@@ -20,7 +24,12 @@ class CreateTicket
     public function handle(User $requester, array $data): Ticket
     {
         return DB::transaction(function () use ($requester, $data): Ticket {
-            $ticket = $requester->requestedTickets()->create($data);
+            // A password written in a ticket is removed before it is stored:
+            // nobody in the support team needs it, and it would stay readable for months.
+            $ticket = $requester->requestedTickets()->create([
+                'title' => $this->masker->redactPasswords($data['title']),
+                'description' => $this->masker->redactPasswords($data['description']),
+            ]);
 
             $this->workflow->recordCreation($ticket, $requester);
 
