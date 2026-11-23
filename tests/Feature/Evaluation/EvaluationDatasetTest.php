@@ -28,10 +28,10 @@ test('every expected category exists in the reference data', function () {
     expect($expected)->toBe(Category::query()->orderBy('slug')->pluck('slug')->all());
 });
 
-test('the evaluation set is balanced between categories and covers every priority', function () {
+test('the evaluation set has enough tickets in each category and covers every priority', function () {
     $cases = collect((new EvaluationDataset)->load());
 
-    expect($cases->countBy('expectedCategory')->unique()->values()->all())->toBe([10])
+    expect($cases->countBy('expectedCategory')->min())->toBeGreaterThanOrEqual(8)
         ->and($cases->map(fn (EvaluationCase $case) => $case->expectedPriority->value)->unique()->sort()->values()->all())
         ->toBe(['critical', 'high', 'low', 'normal']);
 });

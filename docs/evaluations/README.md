@@ -45,39 +45,59 @@ Une évaluation complète avec l'IA fait 60 appels (jusqu'à 120 si des réponse
   personne que le jeu de test. Sur de vrais tickets, elle ferait moins bien.
 - **Le prompt ne contient aucun exemple tiré du jeu de test**, pour ne pas fausser la mesure.
 
-## Étiquettes à relire en priorité
+## Relecture des étiquettes
 
 Quand les trois méthodes (mots-clés et deux modèles) contredisent la même étiquette, soit le
-ticket est difficile, soit l'étiquette est discutable. Dans le rapport du 23 novembre, c'est le
-cas de ces tickets : ce sont les premiers à relire dans `database/data/evaluation-tickets.json`.
+ticket est difficile, soit l'étiquette est discutable. Dans le rapport du 23 novembre, c'était
+le cas de huit tickets. L'étudiant les a relus et a tranché le 23/11/2026 :
 
-| N° | Ticket | Étiquette actuelle | Ce que proposent les trois méthodes |
+| N° | Ticket | Ce que proposaient les méthodes | Décision |
 |---|---|---|---|
-| 14 | Lecteur P: inaccessible pour toute la comptabilité | `reseau` | `acces-comptes` (2 fois), `materiel` |
-| 18 | Ouverture d'un accès pour un prestataire | `reseau` / Basse | `acces-comptes` / Normale (3 fois) |
-| 27 | Nouveau téléphone : plus de codes de double authentification | `acces-comptes` | `materiel` (2 fois), `messagerie` |
-| 45 | Création d'une adresse partagée contact@ | `messagerie` | `autre` (2 fois), `materiel` |
-| 53 | Commande d'un téléphone portable professionnel | `autre` / Basse | `materiel` / Normale (3 fois) |
-| 55 | Déménagement de quatre postes vendredi | `autre` | `materiel` (2 fois), `reseau` |
-| 26 | Demande de droits administrateur | Basse | Normale (3 fois) |
-| 35 | Le correcteur orthographique de Word a disparu | Basse | Normale (3 fois) |
+| 14 | Lecteur P: inaccessible pour toute la comptabilité | `acces-comptes` (2 fois), `materiel` | `reseau` gardé : tout un service perd un partage en même temps |
+| 18 | Ouverture d'un accès pour un prestataire | `acces-comptes` / Normale (3 fois) | `reseau` / Basse gardé : il faut ouvrir un passage vers un automate, pas créer un compte |
+| 27 | Nouveau téléphone : plus de codes de double authentification | `materiel` (2 fois), `messagerie` | `acces-comptes` gardé : le téléphone n'est que la cause |
+| 45 | Création d'une adresse partagée contact@ | `autre` (2 fois), `materiel` | `messagerie` gardé |
+| 53 | Commande d'un téléphone portable professionnel | `materiel` / Normale (3 fois) | **corrigé** : `autre` devient `materiel`, comme le ticket 5 (demande d'un second écran) |
+| 55 | Déménagement de quatre postes vendredi | `materiel` (2 fois), `reseau` | **corrigé** : `autre` devient `materiel` |
+| 26 | Demande de droits administrateur | Normale (3 fois) | Basse gardée : personne n'est bloqué, pas d'échéance |
+| 35 | Le correcteur orthographique de Word a disparu | Normale (3 fois) | Basse gardée |
 
-Une étiquette contredite n'est pas forcément fausse : le ticket 32 (« URGENT !!! Installation de
-Photoshop ») est volontairement en priorité basse, et les trois méthodes se laissent prendre par
-le mot « urgent ». C'est à l'étudiant de trancher. Après une correction, relancer l'évaluation :
-les chiffres d'un rapport ne valent que pour les étiquettes du jour où il a été produit.
+Une étiquette contredite n'est donc pas forcément fausse : six sur huit ont été gardées. Le
+ticket 32 (« URGENT !!! Installation de Photoshop ») reste lui aussi en priorité basse, alors
+que les trois méthodes se laissent prendre par le mot « urgent ».
+
+Les 52 autres étiquettes restent à relire par l'étudiant. Le jeu n'est plus parfaitement
+équilibré : 12 tickets `materiel`, 8 `autre`, 10 dans chaque autre catégorie.
+
+### Effet de la correction sur les chiffres
+
+Corriger une étiquette dans le sens des méthodes fait monter leur score : il faut le dire. Les
+deux corrections se justifient par la cohérence du jeu (ticket 5), pas par l'accord des modèles.
+
+| Méthode | Catégorie, avant | Catégorie, après | Catégorie et priorité, avant | après |
+|---|---|---|---|---|
+| Référence par mots-clés | 78 % ± 10 | 82 % ± 10 | 52 % ± 13 | 53 % ± 13 |
+| `llama3.2:3b` | 60 % ± 12 | 63 % ± 12 | 28 % ± 11 | 30 % ± 12 |
+| `qwen2.5:1.5b` | 62 % ± 12 | 63 % ± 12 | 27 % ± 11 | 27 % ± 11 |
+
+La ligne de la référence a été relancée sur le jeu corrigé (rapport ci-dessous). Les deux
+modèles n'ont pas été relancés : leurs réponses du 23 novembre, enregistrées dans le rapport,
+ont été recomptées avec les étiquettes corrigées. La conclusion ne change pas : l'écart sur la
+catégorie (18 points) dépasse toujours la marge d'erreur de la différence (± 16 points).
 
 ## Rapports
 
 | Fichier | Contenu |
 |---|---|
 | [`2026-11-23-reference-mots-cles.md`](2026-11-23-reference-mots-cles.md) | Référence par mots-clés seule : 78 % ± 10 sur la catégorie |
-| [`2026-11-23-modeles-locaux-ollama.md`](2026-11-23-modeles-locaux-ollama.md) | Deux modèles locaux (Ollama) comparés à la référence |
+| [`2026-11-23-reference-mots-cles-etiquettes-corrigees.md`](2026-11-23-reference-mots-cles-etiquettes-corrigees.md) | Référence par mots-clés seule, après correction de deux étiquettes : 82 % ± 10 |
+| [`2026-11-23-modeles-locaux-ollama.md`](2026-11-23-modeles-locaux-ollama.md) | Deux modèles locaux (Ollama) comparés à la référence, avant la correction des étiquettes |
 
 ## Première évaluation réelle : deux petits modèles locaux
 
 Conditions : Ollama 0.32.15, sans carte graphique (4 cœurs), les 60 tickets, le même prompt et
-le même code que pour un vrai ticket.
+le même code que pour un vrai ticket. Les chiffres ci-dessous sont ceux du rapport, donc d'avant la
+correction de deux étiquettes (voir « Relecture des étiquettes »).
 
 | Méthode | Catégorie | Priorité | Catégorie et priorité | Temps moyen |
 |---|---|---|---|---|

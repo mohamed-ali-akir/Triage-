@@ -445,3 +445,12 @@ Le projet n'a pas de clé d'API Anthropic, donc l'évaluation avec Claude n'a pa
 format contrôlé contre la documentation, refus d'une clé factice vérifié). Plutôt que d'inventer
 des chiffres, la documentation le dit : la seule évaluation réelle est celle des modèles locaux.
 L'interface `AiProvider` permet de la refaire avec Claude plus tard, sans modifier le code.
+
+### D66 — Deux étiquettes corrigées après la première évaluation
+
+L'étudiant a relu les huit tickets que les trois méthodes contredisaient : six étiquettes sont
+gardées, deux sont corrigées (n° 53 et 55, `autre` devient `materiel`, par cohérence avec le
+ticket 5). Corriger dans le sens des méthodes fait monter leur score (référence : 78 % puis
+82 %), donc le rapport d'origine est conservé et les deux séries de chiffres sont publiées.
+Le jeu n'est plus parfaitement équilibré (12 `materiel`, 8 `autre`) : c'est le prix de la cohérence.
+
