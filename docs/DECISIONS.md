@@ -246,9 +246,12 @@ que sur MySQL, dans la CI.
 ### D37 — Tests d'intégration sans transaction
 
 Un index plein texte MySQL ne voit pas les lignes d'une transaction non validée. Or
-`RefreshDatabase` enveloppe chaque test dans une transaction. Les tests du dossier
-`tests/Integration` utilisent donc `DatabaseMigrations` : la base est recréée et les données
-réellement écrites. C'est plus lent, donc réservé à ces quelques tests.
+`RefreshDatabase` enveloppe chaque test dans une transaction. Deux conséquences. Les tests de
+fonctionnalité utilisent toujours la recherche par mots-clés, quelle que soit la base
+(`tests/Pest.php`). Et le plein texte a ses propres tests, dans `tests/Integration`, avec
+`DatabaseMigrations` : la base est recréée et les données réellement écrites. Ce piège n'est
+apparu que dans la CI MySQL : les tests passaient tous sur SQLite. C'est exactement pour cela
+que la CI teste les deux bases.
 
 ### D38 — RAG simple : chercher, puis générer
 

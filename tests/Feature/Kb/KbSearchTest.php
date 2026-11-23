@@ -2,7 +2,6 @@
 
 use App\Models\KbArticle;
 use App\Models\User;
-use App\Services\Kb\KbSearch;
 use App\Services\Kb\KeywordKbSearch;
 
 beforeEach(function () {
@@ -19,7 +18,8 @@ beforeEach(function () {
         'content' => 'Depuis la console Active Directory, déverrouiller le compte puis définir un mot de passe provisoire.',
     ]);
 
-    // This suite runs on SQLite, where the keyword fallback is used.
+    // The keyword search is tested here on every database; the MySQL full-text
+    // search is covered by tests/Integration/FullTextKbSearchTest.php.
     $this->search = app(KeywordKbSearch::class);
 });
 
@@ -69,11 +69,6 @@ test('the number of results is limited', function () {
     KbArticle::factory()->count(8)->create(['title' => 'Guide VPN', 'content' => 'Tout sur le VPN.']);
 
     expect($this->search->search('VPN', limit: 3))->toHaveCount(3);
-});
-
-test('the search implementation follows the database driver', function () {
-    // SQLite has no full-text index: the keyword fallback is bound.
-    expect(app(KbSearch::class))->toBeInstanceOf(KeywordKbSearch::class);
 });
 
 test('support staff can browse and search the knowledge base', function (string $state) {

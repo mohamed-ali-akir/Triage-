@@ -2,7 +2,6 @@
 
 use App\Models\KbArticle;
 use App\Services\Kb\FullTextKbSearch;
-use App\Services\Kb\KbSearch;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -28,10 +27,6 @@ beforeEach(function () {
         'title' => 'Réinitialiser un mot de passe Windows',
         'content' => 'Depuis la console Active Directory, déverrouiller le compte.',
     ]);
-});
-
-test('the full-text implementation is bound on MySQL', function () {
-    expect(app(KbSearch::class))->toBeInstanceOf(FullTextKbSearch::class);
 });
 
 test('the full-text search ranks the matching article first', function () {

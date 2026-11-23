@@ -1,5 +1,7 @@
 <?php
 
+use App\Services\Kb\KbSearch;
+use App\Services\Kb\KeywordKbSearch;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -7,6 +9,12 @@ use Tests\TestCase;
 // Feature tests boot the application and start from an empty database.
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
+    ->beforeEach(function () {
+        // RefreshDatabase wraps each test in a transaction, and a MySQL full-text index
+        // does not see uncommitted rows. Feature tests therefore always use the keyword
+        // search, whatever the database; the full-text search has its own integration tests.
+        app()->bind(KbSearch::class, KeywordKbSearch::class);
+    })
     ->in('Feature');
 
 // Unit tests that need the framework (enums and services) only boot the application.
