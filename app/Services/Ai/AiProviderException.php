@@ -2,6 +2,7 @@
 
 namespace App\Services\Ai;
 
+use Illuminate\Http\Client\ConnectionException;
 use RuntimeException;
 
 /**
@@ -23,6 +24,24 @@ class AiProviderException extends RuntimeException
     public static function timeout(): self
     {
         return new self('timeout');
+    }
+
+    public static function unreachable(): self
+    {
+        return new self('unreachable');
+    }
+
+    /**
+     * Laravel raises the same exception for a timeout and for a server that
+     * cannot be reached at all: tell them apart for the AI log.
+     */
+    public static function fromConnection(ConnectionException $exception): self
+    {
+        $message = strtolower($exception->getMessage());
+
+        return str_contains($message, 'timed out') || str_contains($message, 'curl error 28')
+            ? self::timeout()
+            : self::unreachable();
     }
 
     public static function http(int $status): self

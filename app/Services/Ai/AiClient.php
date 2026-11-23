@@ -70,6 +70,10 @@ class AiClient
      */
     private function estimateCost(string $model, AiResponse $response): ?float
     {
+        if (in_array($this->provider->name(), (array) config('ai.free_providers'), true)) {
+            return 0.0;
+        }
+
         /** @var array{0: float|int, 1: float|int}|null $prices */
         $prices = config("ai.pricing.{$model}");
 

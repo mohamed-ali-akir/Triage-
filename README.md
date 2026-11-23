@@ -14,7 +14,7 @@ une priorité et une réponse ; **un technicien valide toujours avant toute acti
 | 1 | Socle : authentification, rôles, tickets, machine à états, fil de discussion, notifications, CI | Terminée |
 | 2 | Tri par IA : classification, anonymisation, validation par le technicien, mode dégradé | Terminée |
 | 3 | Base de connaissances, réponses suggérées avec sources, détection des doublons | Terminée |
-| 4 | Évaluation de l'IA et tableau de bord | À venir |
+| 4 | Évaluation de l'IA, modèle local, tableau de bord, délais cibles, purge RGPD | Terminée |
 | 5 | API REST et application mobile du technicien | À venir |
 
 ## Documentation
@@ -22,6 +22,8 @@ une priorité et une réponse ; **un technicien valide toujours avant toute acti
 - [Cahier des charges](docs/CAHIER_DES_CHARGES.md)
 - [Modèle de données et diagrammes](docs/MODELE_DONNEES.md)
 - [Journal des décisions techniques](docs/DECISIONS.md)
+- [Protection des données personnelles (RGPD)](docs/RGPD.md)
+- [Évaluations du tri par IA](docs/evaluations/README.md)
 
 ## Prérequis
 
@@ -152,6 +154,45 @@ L'application signale aussi les tickets ouverts qui semblent porter sur le même
 
 ![Réponse suggérée](docs/captures/reponse-suggeree.png)
 
+## Évaluer l'IA
+
+La commande `triage:evaluate` fait classer 60 tickets étiquetés à la main par l'IA et par une
+méthode de référence par mots-clés, puis écrit un rapport dans `docs/evaluations/`.
+
+```bash
+php artisan triage:evaluate --baseline-only                     # la référence seule, sans IA
+php artisan triage:evaluate                                     # l'IA configurée dans .env
+php artisan triage:evaluate --model=claude-opus-5-5 --model=claude-haiku-5-5
+php artisan triage:evaluate --provider=ollama --model=llama3.2  # un modèle local
+```
+
+Le rapport donne la précision avec sa marge d'erreur, la précision par catégorie, une matrice
+de confusion, le temps moyen, le coût estimé et la fiabilité du score de confiance. Détails et
+limites : [docs/evaluations/README.md](docs/evaluations/README.md).
+
+### Modèle local avec Ollama
+
+Avec `AI_PROVIDER=ollama`, le modèle tourne sur votre machine : aucune donnée ne sort et un
+appel ne coûte rien. Installez [Ollama](https://ollama.com), téléchargez un modèle
+(`ollama pull llama3.2`), puis réglez `OLLAMA_MODEL` dans `.env`.
+
+## Tableau de bord
+
+L'administrateur dispose d'un tableau de bord : tickets par statut et par catégorie, délais
+moyens, tickets en retard par rapport aux délais cibles (`config/tickets.php`), décisions des
+techniciens sur les suggestions de l'IA, consommation de l'IA par jour.
+
+![Tableau de bord](docs/captures/tableau-de-bord.png)
+
+## Données personnelles
+
+```bash
+php artisan triage:purge-old-tickets --dry-run        # tickets clos depuis plus de 24 mois
+php artisan triage:anonymize-user adresse@exemple.fr  # droit à l'effacement
+```
+
+La purge est planifiée chaque nuit. Tout est décrit dans [docs/RGPD.md](docs/RGPD.md).
+
 ## File d'attente
 
 Les notifications (et, à partir de la phase 2, les appels à l'IA) passent par une file
@@ -163,9 +204,10 @@ php artisan queue:work
 
 Sans ce processus, l'application fonctionne mais les notifications restent en attente.
 
-Le planificateur de Laravel envoie en tri manuel les tickets que l'IA n'a pas traités à temps
-(par exemple si le worker est arrêté). En production, une seule ligne de cron suffit ; en
-développement, lancez-le à la main :
+Le planificateur de Laravel lance deux tâches : il envoie en tri manuel les tickets que l'IA
+n'a pas traités à temps (par exemple si le worker est arrêté), et il purge chaque nuit les
+tickets trop anciens. En production, une seule ligne de cron suffit ; en développement,
+lancez-le à la main :
 
 ```bash
 php artisan schedule:work
@@ -192,7 +234,9 @@ La CI GitHub Actions exécute les mêmes contrôles à chaque pull request : tes
 | `app/Enums` | Rôles, statuts, priorités. La machine à états est dans `TicketStatus` |
 | `app/Services/Tickets` | `TicketWorkflow` (seul point d'entrée pour modifier un ticket) et `TicketNotifier` |
 | `app/Services/Ai` | `AiProvider` et ses fournisseurs, `TicketClassifier`, `SuggestionReviewer`, journal des appels |
-| `app/Services/Privacy` | `PiiMasker` : anonymisation avant envoi à l'IA |
+| `app/Services/Privacy` | `PiiMasker` (anonymisation avant envoi à l'IA) et `TicketAnonymizer` (purge RGPD) |
+| `app/Services/Evaluation` | Jeu de test, méthode de référence, calcul des mesures, rapport |
+| `app/Services/Dashboard` | Statistiques du tableau de bord |
 | `app/Services/Kb` | Recherche dans la base de connaissances (plein texte MySQL, repli par mots-clés) |
 | `app/Jobs` | Les trois traitements en file d'attente : classification, réponse suggérée, doublons |
 | `resources/prompts` | Les prompts envoyés à l'IA |

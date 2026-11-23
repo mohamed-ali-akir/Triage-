@@ -14,7 +14,7 @@ return [
 
     'enabled' => (bool) env('AI_ENABLED', false),
 
-    // "anthropic" (Claude API) or "fake" (scripted answers, used by the tests).
+    // "anthropic" (Claude API), "ollama" (local model) or "fake" (scripted answers, used by the tests).
     'provider' => env('AI_PROVIDER', 'anthropic'),
 
     // Maximum time, in seconds, to wait for an answer before giving up.
@@ -59,6 +59,11 @@ return [
         'refusal_fallback' => (bool) env('ANTHROPIC_REFUSAL_FALLBACK', true),
     ],
 
+    'ollama' => [
+        'base_url' => env('OLLAMA_BASE_URL', 'http://localhost:11434'),
+        'model' => env('OLLAMA_MODEL', 'llama3.2'),
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | Pricing
@@ -77,7 +82,9 @@ return [
         'claude-sonnet-5-5' => [2.00, 10.00],
         'claude-sonnet-5' => [2.00, 10.00],
         'claude-haiku-5-5' => [0.10, 0.50],
-        'fake' => [0.0, 0.0],
     ],
+
+    // Providers that run on our own machine: a call costs nothing.
+    'free_providers' => ['ollama', 'fake'],
 
 ];

@@ -6,6 +6,7 @@ use App\Enums\AiSuggestionStatus;
 use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
 use App\Enums\TriageMode;
+use Carbon\CarbonInterface;
 use Database\Factories\TicketFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -44,6 +45,7 @@ class Ticket extends Model
             'taken_at' => 'datetime',
             'resolved_at' => 'datetime',
             'closed_at' => 'datetime',
+            'anonymized_at' => 'datetime',
         ];
     }
 
@@ -173,6 +175,69 @@ class Ticket extends Model
             ->implode(' ');
 
         $query->orderByRaw("CASE priority {$cases} ELSE 99 END DESC")->oldest('created_at')->oldest('id');
+    }
+
+    /**
+     * The date before which a technician should have taken the ticket.
+     * Unknown while the ticket has no priority.
+     */
+    public function takeDeadline(): ?CarbonInterface
+    {
+        return $this->deadline('take');
+    }
+
+    /**
+     * The date before which the ticket should be resolved.
+     */
+    public function resolveDeadline(): ?CarbonInterface
+    {
+        return $this->deadline('resolve');
+    }
+
+    /**
+     * An open ticket is late when it was not taken, or not resolved, within its target delay.
+     * A ticket that is resolved or closed is never "late": the work is done.
+     */
+    public function isLate(): bool
+    {
+        if (in_array($this->status, [TicketStatus::Resolved, TicketStatus::Closed], true)) {
+            return false;
+        }
+
+        $takeDeadline = $this->takeDeadline();
+        $resolveDeadline = $this->resolveDeadline();
+
+        if ($takeDeadline === null || $resolveDeadline === null) {
+            return false;
+        }
+
+        return ($this->taken_at === null && now()->greaterThan($takeDeadline))
+            || now()->greaterThan($resolveDeadline);
+    }
+
+    /**
+     * For a ticket that has been resolved: was it done within the target delay?
+     */
+    public function wasResolvedOnTime(): ?bool
+    {
+        $deadline = $this->resolveDeadline();
+
+        if ($this->resolved_at === null || $deadline === null) {
+            return null;
+        }
+
+        return $this->resolved_at->lessThanOrEqualTo($deadline);
+    }
+
+    private function deadline(string $step): ?CarbonInterface
+    {
+        if ($this->priority === null || $this->created_at === null) {
+            return null;
+        }
+
+        $hours = (int) config("tickets.sla.{$this->priority->value}.{$step}");
+
+        return $this->created_at->copy()->addHours($hours);
     }
 
     /**

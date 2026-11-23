@@ -249,3 +249,9 @@ erDiagram
 
 Les deux relations plusieurs-à-plusieurs (suggestion / article, ticket / ticket) deviennent
 chacune une table de liaison dans le MLD.
+
+## 8. Phase 4
+
+La phase 4 n'ajoute qu'une colonne : `tickets.anonymized_at`, renseignée quand le contenu d'un
+ticket a été effacé à la fin de sa durée de conservation. Le tableau de bord et l'évaluation
+lisent les tables existantes (`tickets`, `ai_suggestions`, `ai_logs`).

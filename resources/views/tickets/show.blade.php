@@ -41,6 +41,17 @@
                         <dt class="text-slate-500">Technicien</dt>
                         <dd class="text-slate-900">{{ $ticket->assignee?->name ?? 'Non assigné' }}</dd>
                     </div>
+                    @if (auth()->user()->isStaff() && $ticket->status->isOpen() && $ticket->resolveDeadline() && ! $ticket->resolved_at)
+                        <div class="flex items-center justify-between gap-4">
+                            <dt class="text-slate-500">Échéance</dt>
+                            <dd class="flex items-center gap-2 text-slate-900">
+                                {{ $ticket->resolveDeadline()->format('d/m/Y H:i') }}
+                                @if ($ticket->isLate())
+                                    <x-badge color="red">En retard</x-badge>
+                                @endif
+                            </dd>
+                        </div>
+                    @endif
                     @if ($ticket->taken_at)
                         <div class="flex items-center justify-between gap-4">
                             <dt class="text-slate-500">Pris en charge</dt>

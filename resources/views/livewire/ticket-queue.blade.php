@@ -77,7 +77,12 @@
                         </a>
                         <span class="block text-xs text-slate-500">{{ $ticket->requester->name }}</span>
                     </td>
-                    <td class="px-4 py-3"><x-ticket.status-badge :status="$ticket->status" /></td>
+                    <td class="px-4 py-3">
+                        <x-ticket.status-badge :status="$ticket->status" />
+                        @if ($ticket->isLate())
+                            <x-badge color="red" class="mt-1">En retard</x-badge>
+                        @endif
+                    </td>
                     <td class="px-4 py-3">
                         @if ($ticket->isTriaged())
                             <x-ticket.priority-badge :priority="$ticket->priority" />

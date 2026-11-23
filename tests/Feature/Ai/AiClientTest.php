@@ -60,7 +60,7 @@ test('a failed call is written to the AI log and the error is passed on', functi
 
 test('the cost is estimated from the price of the model', function () {
     // 1,000 input tokens at $4 per million + 200 output tokens at $20 per million.
-    config(['ai.pricing.fake' => [4.00, 20.00]]);
+    config(['ai.pricing.fake' => [4.00, 20.00], 'ai.free_providers' => []]);
     $this->provider->willReturn('ok', inputTokens: 1000, outputTokens: 200);
 
     $this->client->ask('classification', null, 'system', 'user');
@@ -69,12 +69,20 @@ test('the cost is estimated from the price of the model', function () {
 });
 
 test('the cost is unknown when the model has no price', function () {
-    config(['ai.pricing' => []]);
+    config(['ai.pricing' => [], 'ai.free_providers' => []]);
     $this->provider->willReturn('ok');
 
     $this->client->ask('classification', null, 'system', 'user');
 
     expect(AiLog::query()->sole()->estimated_cost_usd)->toBeNull();
+});
+
+test('a provider that runs locally costs nothing', function () {
+    $this->provider->willReturn('ok', inputTokens: 5000, outputTokens: 900);
+
+    $this->client->ask('classification', null, 'system', 'user');
+
+    expect(AiLog::query()->sole()->estimated_cost_usd)->toBe(0.0);
 });
 
 test('an unusable answer can be flagged afterwards', function () {

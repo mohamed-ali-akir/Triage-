@@ -47,3 +47,21 @@
 .kb-content > :first-child {
     @apply mt-0;
 }
+
+/* Charts of the dashboard. Marks carry the colours; text keeps the normal text colours. */
+.viz {
+    --viz-series-1: #2a78d6; /* blue: also the single hue of one-series bars */
+    --viz-series-2: #eb6834; /* orange */
+    --viz-series-3: #1baf7a; /* aqua */
+    --viz-series-4: #eda100; /* yellow */
+}
+
+.viz-bar {
+    @apply h-3 rounded-r;
+    min-width: 2px;
+    background-color: var(--viz-series-1);
+}
+
+.viz-swatch {
+    @apply inline-block h-2.5 w-2.5 shrink-0 rounded-sm;
+}

@@ -9,6 +9,7 @@ use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
 use App\Enums\TriageMode;
 use App\Enums\UserRole;
+use App\Models\AiLog;
 use App\Models\Category;
 use App\Models\Department;
 use App\Models\KbArticle;
@@ -120,6 +121,9 @@ class DemoSeeder extends Seeder
 
         if (isset($scenario['ai'])) {
             $this->storeSuggestion($ticket, $scenario['ai'], $scenario['ai_reply'] ?? null, $scenario['ai_no_article'] ?? false);
+        } elseif ($technician !== null) {
+            // Tickets triaged by hand: the AI did not answer in time that day.
+            $this->logCall($ticket, 'classification', 0, 0, 'timeout');
         }
 
         if ($scenario['ai_rejected'] ?? false) {
@@ -171,6 +175,38 @@ class DemoSeeder extends Seeder
         if ($reply !== null) {
             $stored->articles()->attach(KbArticle::query()->where('title', $reply[1])->value('id'));
         }
+
+        $this->logCall($ticket, 'classification', 640 + $ticket->id * 13, 38);
+
+        if ($reply !== null || $noArticle) {
+            $this->logCall($ticket, 'reply', 1850 + $ticket->id * 21, $reply !== null ? 210 : 24);
+        }
+    }
+
+    /**
+     * Write the AI log line a real call would have left, so that the dashboard has figures to show.
+     */
+    private function logCall(Ticket $ticket, string $purpose, int $inputTokens, int $outputTokens, ?string $errorCode = null): void
+    {
+        $model = 'claude-opus-5-5';
+        [$inputPrice, $outputPrice] = config("ai.pricing.{$model}");
+
+        (new AiLog)->forceFill([
+            'ticket_id' => $ticket->id,
+            'purpose' => $purpose,
+            'provider' => 'anthropic',
+            'model' => $model,
+            'input_tokens' => $errorCode === null ? $inputTokens : 0,
+            'output_tokens' => $errorCode === null ? $outputTokens : 0,
+            'duration_ms' => $errorCode === null ? 1400 + ($ticket->id * 137) % 900 : 30000,
+            'estimated_cost_usd' => $errorCode === null
+                ? round(($inputTokens * $inputPrice + $outputTokens * $outputPrice) / 1_000_000, 6)
+                : null,
+            'success' => $errorCode === null,
+            'error_code' => $errorCode,
+            // The simulated time of the scenario, not the time the seeder runs.
+            'created_at' => now(),
+        ])->save();
     }
 
     /**
