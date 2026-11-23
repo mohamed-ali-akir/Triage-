@@ -22,8 +22,8 @@ test('a user deactivated while logged in is logged out on the next request', fun
     $this->assertGuest();
 });
 
-test('each role lands on its own home page', function () {
-    $this->actingAs(User::factory()->admin()->create())
+test('support staff land on the ticket queue', function (string $state) {
+    $this->actingAs(User::factory()->{$state}()->create())
         ->get('/')
-        ->assertRedirect('/admin/users');
-});
+        ->assertRedirect('/queue');
+})->with(['technician', 'admin']);

@@ -3,8 +3,11 @@
 namespace App\Services\Tickets;
 
 use App\Enums\TicketEventType;
+use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
 use App\Exceptions\InvalidTicketTransition;
+use App\Exceptions\TicketNotAssignable;
+use App\Models\Category;
 use App\Models\Ticket;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -36,6 +39,77 @@ class TicketWorkflow
             $ticket->save();
 
             $this->record($ticket, TicketEventType::StatusChanged, $from->value, $to->value, $actor);
+
+            return $ticket;
+        });
+    }
+
+    /**
+     * Set the category and the priority of a ticket (manual triage).
+     * Only the values that really change are written to the history.
+     */
+    public function triage(Ticket $ticket, Category $category, TicketPriority $priority, ?User $actor = null): Ticket
+    {
+        return DB::transaction(function () use ($ticket, $category, $priority, $actor): Ticket {
+            $oldCategoryId = $ticket->category_id;
+            $oldPriority = $ticket->priority;
+
+            $ticket->category_id = $category->id;
+            $ticket->priority = $priority;
+            $ticket->save();
+
+            if ($oldCategoryId !== $category->id) {
+                $this->record(
+                    $ticket,
+                    TicketEventType::CategoryChanged,
+                    $oldCategoryId === null ? null : (string) $oldCategoryId,
+                    (string) $category->id,
+                    $actor,
+                );
+            }
+
+            if ($oldPriority !== $priority) {
+                $this->record($ticket, TicketEventType::PriorityChanged, $oldPriority?->value, $priority->value, $actor);
+            }
+
+            return $ticket;
+        });
+    }
+
+    /**
+     * Give the ticket to a technician.
+     * A ticket waiting for validation becomes "assigned"; a ticket already
+     * in progress keeps its status and only changes hands.
+     *
+     * @throws TicketNotAssignable
+     */
+    public function assign(Ticket $ticket, User $technician): Ticket
+    {
+        if (! $ticket->status->acceptsAssignment()) {
+            throw TicketNotAssignable::wrongStatus($ticket->status);
+        }
+
+        if (! $ticket->isTriaged()) {
+            throw TicketNotAssignable::notTriaged();
+        }
+
+        return DB::transaction(function () use ($ticket, $technician): Ticket {
+            $previousAssigneeId = $ticket->assignee_id;
+
+            $ticket->assignee_id = $technician->id;
+            $ticket->save();
+
+            $this->record(
+                $ticket,
+                TicketEventType::Assigned,
+                $previousAssigneeId === null ? null : (string) $previousAssigneeId,
+                (string) $technician->id,
+                $technician,
+            );
+
+            if ($ticket->status === TicketStatus::PendingValidation) {
+                $this->transition($ticket, TicketStatus::Assigned, $technician);
+            }
 
             return $ticket;
         });

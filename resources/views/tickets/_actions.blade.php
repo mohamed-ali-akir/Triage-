@@ -16,11 +16,29 @@
         TicketStatus::Closed => 'Clore le ticket',
         default => $target->label(),
     };
+
+    // "Take this ticket" is offered to a technician when the ticket can change hands.
+    $canAssign = $ticket->status->acceptsAssignment() && auth()->user()->can('assign', $ticket);
 @endphp
 
-@if ($transitions->isNotEmpty())
+@if ($transitions->isNotEmpty() || $canAssign)
     <x-card title="Actions">
         <div class="space-y-2">
+            @if ($canAssign)
+                <form method="POST" action="{{ route('tickets.assign.update', $ticket) }}">
+                    @csrf
+                    @method('PATCH')
+
+                    <x-button class="w-full" :disabled="! $ticket->isTriaged()">
+                        {{ $ticket->assignee_id === null ? 'Prendre en charge' : 'Reprendre ce ticket' }}
+                    </x-button>
+                </form>
+
+                @unless ($ticket->isTriaged())
+                    <p class="text-xs text-slate-500">Triez d'abord le ticket : catégorie et priorité.</p>
+                @endunless
+            @endif
+
             @foreach ($transitions as $target)
                 <form method="POST" action="{{ route('tickets.status.update', $ticket) }}">
                     @csrf

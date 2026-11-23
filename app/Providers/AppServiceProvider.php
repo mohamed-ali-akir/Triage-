@@ -24,5 +24,6 @@ class AppServiceProvider extends ServiceProvider
     private function defineGates(): void
     {
         Gate::define('access-admin', fn (User $user): bool => $user->isAdmin());
+        Gate::define('view-queue', fn (User $user): bool => $user->isStaff());
     }
 }

@@ -49,6 +49,20 @@ enum TicketStatus: string
         return in_array($target, $this->allowedTransitions(), true);
     }
 
+    /**
+     * A technician can take a ticket that waits for validation,
+     * or take over a ticket another technician is working on.
+     */
+    public function acceptsAssignment(): bool
+    {
+        return in_array($this, [
+            self::PendingValidation,
+            self::Assigned,
+            self::InProgress,
+            self::WaitingUser,
+        ], true);
+    }
+
     public function isOpen(): bool
     {
         return $this !== self::Closed;

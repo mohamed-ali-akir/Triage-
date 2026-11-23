@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Tickets\CreateTicket;
+use App\Enums\TicketPriority;
 use App\Http\Requests\StoreTicketRequest;
+use App\Models\Category;
 use App\Models\Ticket;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -53,6 +55,11 @@ class TicketController extends Controller
 
         $ticket->load(['requester.department', 'assignee', 'category', 'events.user']);
 
-        return view('tickets.show', ['ticket' => $ticket]);
+        return view('tickets.show', [
+            'ticket' => $ticket,
+            // Used by the triage form, shown to technicians only.
+            'categories' => Category::query()->active()->orderBy('name')->get(),
+            'priorities' => TicketPriority::cases(),
+        ]);
     }
 }

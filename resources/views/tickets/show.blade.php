@@ -13,6 +13,7 @@
         </div>
 
         <aside class="space-y-6">
+            @include('tickets._triage')
             @include('tickets._actions')
 
             <x-card title="Détails">

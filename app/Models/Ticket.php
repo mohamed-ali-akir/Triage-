@@ -6,6 +6,7 @@ use App\Enums\TicketPriority;
 use App\Enums\TicketStatus;
 use Database\Factories\TicketFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -82,6 +83,22 @@ class Ticket extends Model
     public function events(): HasMany
     {
         return $this->hasMany(TicketEvent::class)->oldest('created_at')->oldest('id');
+    }
+
+    /**
+     * Sort for the technician queue: tickets to triage first, then the most
+     * urgent, and the oldest first within the same priority.
+     *
+     * @param  Builder<Ticket>  $query
+     */
+    public function scopeOrderByUrgency(Builder $query): void
+    {
+        // Built from the enum only (no user input), so it is safe to inline in SQL.
+        $cases = collect(TicketPriority::cases())
+            ->map(fn (TicketPriority $priority) => "WHEN '{$priority->value}' THEN {$priority->weight()}")
+            ->implode(' ');
+
+        $query->orderByRaw("CASE priority {$cases} ELSE 99 END DESC")->oldest('created_at')->oldest('id');
     }
 
     /**

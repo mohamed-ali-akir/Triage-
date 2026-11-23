@@ -3,9 +3,8 @@
 namespace App\Exceptions;
 
 use App\Enums\TicketStatus;
-use DomainException;
 
-class InvalidTicketTransition extends DomainException
+class InvalidTicketTransition extends TicketWorkflowException
 {
     public static function between(TicketStatus $from, TicketStatus $to): self
     {

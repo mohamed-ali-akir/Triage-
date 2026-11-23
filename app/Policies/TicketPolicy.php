@@ -50,6 +50,22 @@ class TicketPolicy
     }
 
     /**
+     * Technicians set the category and the priority of an open ticket.
+     */
+    public function triage(User $user, Ticket $ticket): bool
+    {
+        return $ticket->status->isOpen() && $user->isTechnician();
+    }
+
+    /**
+     * A technician takes a ticket for themselves, unless they already have it.
+     */
+    public function assign(User $user, Ticket $ticket): bool
+    {
+        return $user->isTechnician() && $ticket->assignee_id !== $user->id;
+    }
+
+    /**
      * Who may move the ticket to the given status.
      *
      * This only answers "is this person allowed?". Whether the transition

@@ -12,8 +12,8 @@ class HomeController extends Controller
      */
     public function __invoke(Request $request): RedirectResponse
     {
-        if ($request->user()->isAdmin()) {
-            return redirect()->route('admin.users.index');
+        if ($request->user()->isStaff()) {
+            return redirect()->route('queue.index');
         }
 
         return redirect()->route('tickets.index');
