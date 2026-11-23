@@ -181,8 +181,8 @@ test('the reply job is queued after a successful classification', function () {
 
     expect($ticket->status)->toBe(TicketStatus::PendingValidation)
         ->and($suggestion->reply_status)->toBe(ReplyStatus::Proposed)
-        ->and($this->ai->calls)->toHaveCount(2)
-        ->and(AiLog::query()->orderBy('id')->pluck('purpose')->all())->toBe(['classification', 'reply']);
+        // Triage first, then the draft reply, then the search for duplicates.
+        ->and(AiLog::query()->orderBy('id')->pluck('purpose')->all())->toBe(['classification', 'reply', 'duplicates']);
 });
 
 test('no reply is drafted when the classification failed', function () {

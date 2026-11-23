@@ -29,6 +29,22 @@ return [
     // A ticket still "new" after this many minutes is released to manual triage.
     'stuck_after_minutes' => (int) env('AI_STUCK_AFTER_MINUTES', 10),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Duplicate detection
+    |--------------------------------------------------------------------------
+    |
+    | A new ticket is compared with the open tickets of the last days. Tickets
+    | sharing enough keywords are candidates; the AI, when enabled, confirms.
+    |
+    */
+
+    'duplicates' => [
+        'window_days' => (int) env('AI_DUPLICATES_WINDOW_DAYS', 14),
+        'min_shared_keywords' => (int) env('AI_DUPLICATES_MIN_SHARED_KEYWORDS', 2),
+        'max_candidates' => 5,
+    ],
+
     'anthropic' => [
         'api_key' => env('ANTHROPIC_API_KEY'),
         'model' => env('ANTHROPIC_MODEL', 'claude-opus-5-5'),

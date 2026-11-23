@@ -29,10 +29,10 @@ class TicketPromptFormatter
     }
 
     /**
-     * A ticket must not be able to close the <ticket> block and speak outside of it.
+     * A ticket must not be able to close its block, nor to forge an article or a candidate block.
      */
     private function neutraliseTags(string $text): string
     {
-        return (string) preg_replace('/<\s*\/?\s*(?:ticket|articles?)\b[^>]*>/iu', '[balise retirée]', $text);
+        return (string) preg_replace('/<\s*\/?\s*(?:ticket|articles?|candidats?)\b[^>]*>/iu', '[balise retirée]', $text);
     }
 }

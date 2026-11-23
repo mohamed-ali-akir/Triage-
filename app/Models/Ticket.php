@@ -9,9 +9,11 @@ use App\Enums\TriageMode;
 use Database\Factories\TicketFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
@@ -119,6 +121,42 @@ class Ticket extends Model
     public function latestSuggestion(): HasOne
     {
         return $this->hasOne(AiSuggestion::class)->latestOfMany();
+    }
+
+    /**
+     * Earlier tickets this one seems to duplicate.
+     *
+     * @return BelongsToMany<Ticket, $this>
+     */
+    public function duplicateOf(): BelongsToMany
+    {
+        return $this->belongsToMany(self::class, 'ticket_duplicates', 'ticket_id', 'duplicate_of_id')
+            ->withPivot('detected_by');
+    }
+
+    /**
+     * Later tickets that seem to duplicate this one.
+     *
+     * @return BelongsToMany<Ticket, $this>
+     */
+    public function duplicatedBy(): BelongsToMany
+    {
+        return $this->belongsToMany(self::class, 'ticket_duplicates', 'duplicate_of_id', 'ticket_id')
+            ->withPivot('detected_by');
+    }
+
+    /**
+     * Every other ticket, still being worked on, that seems to be about the same problem.
+     * The link is read in both directions: the first ticket of a series must show the others too.
+     *
+     * @return Collection<int, Ticket>
+     */
+    public function similarOpenTickets(): Collection
+    {
+        return $this->duplicateOf->merge($this->duplicatedBy)
+            ->filter(fn (Ticket $ticket): bool => ! in_array($ticket->status, [TicketStatus::Resolved, TicketStatus::Closed], true))
+            ->sortByDesc('created_at')
+            ->values();
     }
 
     /**

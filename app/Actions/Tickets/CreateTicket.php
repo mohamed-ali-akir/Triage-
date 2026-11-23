@@ -4,6 +4,7 @@ namespace App\Actions\Tickets;
 
 use App\Enums\TriageMode;
 use App\Jobs\ClassifyTicket;
+use App\Jobs\DetectDuplicates;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Services\Tickets\TicketWorkflow;
@@ -23,14 +24,18 @@ class CreateTicket
 
             $this->workflow->recordCreation($ticket, $requester);
 
-            if (! config('ai.enabled')) {
+            if (config('ai.enabled')) {
+                // The AI is called later, by a queue worker: the user never waits for it.
+                // Jobs are only sent once this transaction is committed.
+                ClassifyTicket::dispatch($ticket)->afterCommit();
+            } else {
                 // No AI: the ticket goes straight to the manual triage queue.
-                return $this->workflow->queueForValidation($ticket, TriageMode::Manual);
+                $this->workflow->queueForValidation($ticket, TriageMode::Manual);
             }
 
-            // The AI is called later, by a queue worker: the user never waits for it.
-            // The job is only sent once this transaction is committed.
-            ClassifyTicket::dispatch($ticket)->afterCommit();
+            // Runs after the triage, with or without AI: shared keywords alone
+            // already point out likely duplicates.
+            DetectDuplicates::dispatch($ticket)->afterCommit();
 
             return $ticket;
         });

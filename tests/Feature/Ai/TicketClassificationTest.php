@@ -53,7 +53,7 @@ test('no job is queued when the AI is disabled', function () {
 
     $ticket = submitTicket();
 
-    Queue::assertNothingPushed();
+    Queue::assertNotPushed(ClassifyTicket::class);
 
     expect($ticket->status)->toBe(TicketStatus::PendingValidation)
         ->and($ticket->triage_mode)->toBe(TriageMode::Manual);
